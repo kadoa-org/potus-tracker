@@ -16,7 +16,7 @@ Open http://localhost:3000/potus.
 
 ## Stack
 
-Next.js 15 (App Router), React 19, Tailwind, Leaflet. The app is a thin read layer: its API routes serve data from a Supabase project, so it needs the two `NEXT_PUBLIC_SUPABASE_*` values in `.env.local` (see `.env.example`).
+Next.js 15 (App Router), React 19, Tailwind, Leaflet. The app is a thin read layer: its API routes serve data from a Supabase project (server-side only — the browser never touches Supabase), so it needs the two `SUPABASE_*` values in `.env.local` (see `.env.example`).
 
 ## Data pipeline
 
