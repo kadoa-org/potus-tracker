@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertModal } from "@/components/AlertModal";
-import { LiveBadge, NavBar, SiteHeader } from "@/kit";
+import { GitHubButton, LiveBadge, NavBar, SiteHeader } from "@/kit";
 
 const navItems = [
   { href: "/whitehouse", label: "White House News" },
@@ -40,6 +40,7 @@ export function Navigation() {
         right={
           <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <LiveBadge>Live</LiveBadge>
+            <GitHubButton repo="kadoa-org/potus-tracker" />
             <AlertModal />
           </span>
         }
