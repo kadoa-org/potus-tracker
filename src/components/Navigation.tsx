@@ -6,9 +6,9 @@ import { AlertModal } from "@/components/AlertModal";
 import { GitHubButton, LiveBadge, NavBar, SiteHeader } from "@/kit";
 
 const navItems = [
-  { href: "/whitehouse", label: "White House News" },
+  { href: "/whitehouse", label: "White House" },
   { href: "/truth", label: "Truth Social" },
-  { href: "/schedule", label: "Schedule & Location" },
+  { href: "/schedule", label: "Schedule" },
 ];
 
 // Kit chrome passes both `href` and its `to` alias to LinkComponent; strip
