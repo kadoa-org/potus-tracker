@@ -1,0 +1,167 @@
+@import "tailwindcss/index.css";
+
+/* data-kit host page styles. Tokens live in src/kit/kit.css; this file only
+   wires the app shell (fonts, card frames, scroll areas) to those tokens. */
+
+:root {
+  /* @fontsource-variable/inter registers "Inter Variable" */
+  --dk-font: "Inter Variable", "Inter", arial, sans-serif;
+}
+
+body {
+  font-family: var(--dk-font);
+  font-size: 15px;
+  color: var(--dk-ink);
+  @apply antialiased scroll-smooth;
+}
+
+.error {
+  color: var(--dk-red);
+}
+
+.status-message {
+  @apply fixed top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 text-xs font-semibold;
+  background: var(--dk-ink);
+  color: #fff;
+}
+.status-message.error {
+  background: var(--dk-red);
+  color: #fff;
+}
+
+pre {
+  @apply break-words font-mono text-xs;
+}
+
+hr {
+  border-color: var(--dk-rule-soft);
+}
+
+a {
+  color: var(--dk-link);
+}
+
+.whitespace-pre-wrap {
+  white-space: pre-wrap;
+}
+.break-words {
+  word-break: break-word;
+}
+
+/* Card frame for each page panel: square, 1px ink rule, white. */
+main {
+  @apply md:flex-1 flex flex-col max-w-screen;
+  background: var(--dk-bg);
+  border: 1px solid var(--dk-rule);
+}
+.scrollarea {
+  @apply md:flex-1 md:overflow-auto flex flex-col gap-[1px];
+  background: var(--dk-rule-soft);
+}
+
+/* Kit-dialect textarea (dk-input is 32px single-line; this is its
+   multi-line sibling: same border, focus, and type). */
+.dk-textarea {
+  width: 100%;
+  border: 1px solid var(--dk-ink);
+  background: var(--dk-bg);
+  padding: 6px 9px;
+  font: 400 15px/1.45 var(--dk-font);
+  color: var(--dk-ink);
+  resize: none;
+}
+.dk-textarea:focus {
+  outline: 3px solid var(--dk-focus);
+  outline-offset: 0;
+}
+
+/* Primary CTA: GOV.UK-style green fill in the kit palette. Local to potus;
+   backport to the kit if a second consumer needs it. */
+.dk-btn.dk-btn--primary {
+  background: var(--dk-green);
+  border-color: var(--dk-green);
+  color: #fff;
+  font-weight: 600;
+}
+.dk-btn.dk-btn--primary:hover {
+  background: #0c6444;
+  border-color: #0c6444;
+  color: #fff;
+}
+
+/* Alert CTA modal (AlertModal). Native <dialog> gives focus trap, Escape, and
+   backdrop for free; these styles just square it to the kit and dim the page. */
+.dk-dialog {
+  /* position/inset/margin restore modal centering: Tailwind Preflight resets
+     margin:0 on <dialog>, which otherwise pins it top-left. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--dk-rule);
+  background: var(--dk-bg);
+  color: var(--dk-ink);
+  width: calc(100% - 32px);
+  max-width: 460px;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+.dk-dialog::backdrop {
+  background: rgba(11, 12, 12, 0.5);
+}
+.dk-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+.dk-dialog-head h2 {
+  font: 700 var(--dk-fs-l) / 1.3 var(--dk-font);
+  color: var(--dk-ink);
+  margin: 0;
+}
+.dk-dialog-close {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--dk-muted);
+  padding: 4px;
+  display: inline-flex;
+}
+.dk-dialog-close:hover {
+  color: var(--dk-ink);
+}
+
+/* .dk-header-link now lives in the shared kit (kit.css). */
+
+/* Content scroll area: full-width so the scrollbar sits at the viewport edge
+   (not floating at the centered container's edge). `stable both-edges` reserves
+   the gutter symmetrically so the centered content stays aligned with the
+   header's centered container regardless of scrollbar presence. */
+@media (min-width: 640px) {
+  .dk-scroll-area {
+    scrollbar-gutter: stable both-edges;
+  }
+}
+
+/* Make the brand link itself the flex row (logo + wordmark) so it's a clean
+   flex box with no text line-height strut offsetting its center. The kit's
+   .dk-header-brand-group then centers this box with the "by Kadoa" byline, so
+   logo, name, and by Kadoa all share one vertical center axis. Only "by Kadoa"
+   (.dk-header-link) carries the underlined link style. */
+.dk-header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dk-brand-logo {
+  display: block;
+  flex-shrink: 0;
+}
+.dk-brand-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

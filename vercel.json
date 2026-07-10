@@ -1,0 +1,16 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "potus.kadoa.com" }],
+      "destination": "https://www.kadoa.com/potus/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "potus.kadoa.com" }],
+      "destination": "https://www.kadoa.com/potus/:path*",
+      "permanent": true
+    }
+  ]
+}
