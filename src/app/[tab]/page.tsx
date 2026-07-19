@@ -73,10 +73,28 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
   const Component = tab.component as (props: { initial?: unknown }) => ReturnType<typeof Feed>;
   const initial = await getInitial(key);
 
+  // Dataset schema (matches the sibling trackers, which earned "Datasets" rich
+  // results). This is an open dataset we present — not NewsArticle, which would
+  // wrongly claim authorship of the external sources we aggregate.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: tab.title,
+    description: tab.description,
+    url: `https://www.kadoa.com/potus/${key}`,
+    isAccessibleForFree: true,
+    creator: { "@type": "Organization", name: "Kadoa", url: "https://www.kadoa.com" },
+  };
+
   // Single full-width column. The alert CTA lives in the header (AlertModal),
   // not in the content flow, so there is no side-rail and nothing to reflow
   // while data loads.
-  return <Component initial={initial} />;
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <Component initial={initial} />
+    </>
+  );
 }
 
 export async function generateStaticParams() {
