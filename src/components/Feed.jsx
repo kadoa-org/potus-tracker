@@ -1,10 +1,10 @@
 "use client";
 
-import { apiUrl } from "../lib/basePath";
-import { formatDistanceToNow } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tag } from "../kit";
+import { apiUrl } from "../lib/basePath";
 import { FetchStatus } from "./FetchStatus.jsx";
+import { RelativeTime } from "./RelativeTime.jsx";
 
 const getSourceName = (item) => {
   if (item.source && item.source !== "Unknown") return item.source;
@@ -21,12 +21,7 @@ const getSourceName = (item) => {
 const SourceLink = ({ item }) => {
   const sourceName = getSourceName(item);
   return item.link ? (
-    <a
-      href={item.link}
-      target="_blank"
-      rel="noreferrer"
-      className="dk-link"
-    >
+    <a href={item.link} target="_blank" rel="noreferrer" className="dk-link">
       {sourceName}
     </a>
   ) : (
@@ -43,8 +38,7 @@ const FeedItem = ({ item }) => (
       </span>
     </div>
     <div className="dk-hint flex items-center gap-1">
-      <SourceLink item={item} /> &middot;{" "}
-      <span>{formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}</span>
+      <SourceLink item={item} /> &middot; <RelativeTime iso={item.timestamp} />
     </div>
     <div className="mt-1 line-clamp-6 leading-relaxed">{item.summary}</div>
   </div>
@@ -60,11 +54,7 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
 
   return (
     <div className="p-3 bg-white flex items-center justify-center gap-3">
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="dk-btn"
-      >
+      <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="dk-btn">
         Previous
       </button>
       <span className="dk-hint">
@@ -81,15 +71,21 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
   );
 };
 
-export function Feed() {
+export function Feed({ initial }) {
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(initial?.data ?? null);
   const [error, setError] = useState("");
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(initial?.totalPages ?? 1);
+  const [loading, setLoading] = useState(!initial);
+  // Skip the redundant refetch on mount when the server already sent page 1.
+  const skipInitialFetch = useRef(Boolean(initial));
 
   useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
     const fetchData = async () => {
       setLoading(true);
       setError("");
@@ -117,7 +113,7 @@ export function Feed() {
     fetchData();
   }, [currentPage]);
 
-  if (loading || !data) {
+  if (!data) {
     return <FetchStatus loading={loading} error={error} />;
   }
 
@@ -129,20 +125,14 @@ export function Feed() {
       <hr />
       <div id="feedContent" className="scrollarea">
         {data.length === 0 ? (
-          <div className="dk-empty bg-white">
-            No news articles found
-          </div>
+          <div className="dk-empty bg-white">No news articles found</div>
         ) : (
           data.map((item) => <FeedItem key={item.id} item={item} />)
         )}
         <div className="flex-1 bg-white"></div>
       </div>
       <hr />
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        setCurrentPage={setCurrentPage}
-      />
+      <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
     </main>
   );
 }

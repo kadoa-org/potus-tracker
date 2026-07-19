@@ -27,6 +27,26 @@ const tabs = {
 
 type TabKey = keyof typeof tabs;
 
+// Server-fetch the tab's initial data from the public, edge-cached API so the
+// page ships real content in its HTML (crawlable) instead of a "Loading…" shell.
+// Returns undefined on any error → the client component just loads it the old
+// way, so this can never make a page worse than before.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kadoa.com";
+
+async function getInitial(key: TabKey) {
+  try {
+    if (key === "schedule") {
+      const r = await fetch(`${SITE}/potus/api/schedule`, { cache: "no-store" });
+      return r.ok ? (await r.json()).data : undefined;
+    }
+    const type = key === "truth" ? "truth_social" : "news";
+    const r = await fetch(`${SITE}/potus/api/feed?page=1&limit=10&type=${type}`, { cache: "no-store" });
+    return r.ok ? await r.json() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
   const key = (await params).tab as TabKey;
   const tab = tabs[key];
@@ -43,18 +63,20 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
 }
 
 export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
-  const tab = tabs[(await params).tab as TabKey];
+  const key = (await params).tab as TabKey;
+  const tab = tabs[key];
 
   if (!tab) {
     notFound();
   }
 
-  const Component = tab.component;
+  const Component = tab.component as (props: { initial?: unknown }) => ReturnType<typeof Feed>;
+  const initial = await getInitial(key);
 
   // Single full-width column. The alert CTA lives in the header (AlertModal),
   // not in the content flow, so there is no side-rail and nothing to reflow
   // while data loads.
-  return <Component />;
+  return <Component initial={initial} />;
 }
 
 export async function generateStaticParams() {

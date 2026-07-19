@@ -1,10 +1,10 @@
 "use client";
 
-import { apiUrl } from "../lib/basePath";
-import { formatDistanceToNow } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tag } from "../kit";
+import { apiUrl } from "../lib/basePath";
 import { FetchStatus } from "./FetchStatus.jsx";
+import { RelativeTime } from "./RelativeTime.jsx";
 
 const TruthSocialPost = ({ post }) => {
   // Check if the post is primarily media (no text, or very short text with just a link)
@@ -12,42 +12,34 @@ const TruthSocialPost = ({ post }) => {
   const isMediaPost =
     !hasText ||
     (post.text.trim().length < 100 &&
-      (post.text.includes("http") ||
-        post.text.includes("https") ||
-        post.text.includes("rumble.com")));
+      (post.text.includes("http") || post.text.includes("https") || post.text.includes("rumble.com")));
 
   // Get sentiment color and emoji
   const getSentimentDisplay = (sentiment) => {
     switch (sentiment?.toLowerCase()) {
-      case 'positive':
-        return { color: 'text-green-600 bg-green-50' };
-      case 'negative':
-        return { color: 'text-red-600 bg-red-50' };
-      case 'neutral':
-        return { color: 'text-gray-600 bg-gray-50' };
+      case "positive":
+        return { color: "text-green-600 bg-green-50" };
+      case "negative":
+        return { color: "text-red-600 bg-red-50" };
+      case "neutral":
+        return { color: "text-gray-600 bg-gray-50" };
       default:
-        return { color: 'text-gray-600 bg-gray-50' };
+        return { color: "text-gray-600 bg-gray-50" };
     }
   };
 
   // Function to make links clickable
   const renderTextWithLinks = (text) => {
     if (!text) return null;
-    
+
     // Regular expression to match URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = text.split(urlRegex);
-    
+
     return parts.map((part, index) => {
       if (part.match(urlRegex)) {
         return (
-          <a
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noreferrer"
-            className="dk-link"
-          >
+          <a key={index} href={part} target="_blank" rel="noreferrer" className="dk-link">
             {part}
           </a>
         );
@@ -60,11 +52,7 @@ const TruthSocialPost = ({ post }) => {
     <div className="p-4 md:p-6 bg-white">
       <div className="flex gap-3">
         <div className="flex-shrink-0">
-          <img
-            src="/potus/truth-trump.png"
-            alt="Donald J. Trump"
-            className="w-12 h-12 rounded-full"
-          />
+          <img src="/potus/truth-trump.png" alt="Donald J. Trump" className="w-12 h-12 rounded-full" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -72,22 +60,17 @@ const TruthSocialPost = ({ post }) => {
             <span className="dk-hint">@realDonaldTrump</span>
             <span className="dk-hint">·</span>
             <span className="dk-hint">
-              {formatDistanceToNow(new Date(post.timestamp), {
-                addSuffix: true,
-              })}
+              <RelativeTime iso={post.timestamp} />
             </span>
           </div>
 
-          <div className="whitespace-pre-wrap break-words leading-relaxed">
-            {renderTextWithLinks(post.text)}
-          </div>
+          <div className="whitespace-pre-wrap break-words leading-relaxed">{renderTextWithLinks(post.text)}</div>
 
           {isMediaPost && (
             <div className="mt-2">
               <div className="bg-[#f3f2f1] border border-[#e5e6e7] p-3">
                 <p className="dk-hint italic">
-                  This post contains media content that can only be displayed on
-                  Truth Social.
+                  This post contains media content that can only be displayed on Truth Social.
                 </p>
               </div>
             </div>
@@ -95,7 +78,6 @@ const TruthSocialPost = ({ post }) => {
 
           {/* Sentiment and Topics */}
           <div className="mt-3 flex flex-wrap gap-2">
-            
             {post.topics && post.topics.length > 0 && (
               <>
                 {post.topics.map((topic, index) => (
@@ -116,12 +98,7 @@ const TruthSocialPost = ({ post }) => {
                 className="dk-link inline-flex items-center gap-1 text-[13px]"
               >
                 <span>View on Truth Social</span>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -148,11 +125,7 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
 
   return (
     <div className="p-3 bg-white flex items-center justify-center gap-3">
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="dk-btn"
-      >
+      <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="dk-btn">
         Previous
       </button>
       <span className="dk-hint">
@@ -169,15 +142,20 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
   );
 };
 
-export function TruthSocial() {
+export function TruthSocial({ initial }) {
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(initial?.data ?? null);
   const [error, setError] = useState("");
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(initial?.totalPages ?? 1);
+  const [loading, setLoading] = useState(!initial);
+  const skipInitialFetch = useRef(Boolean(initial));
 
   useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
     const fetchData = async () => {
       setLoading(true);
       setError("");
@@ -205,7 +183,7 @@ export function TruthSocial() {
     fetchData();
   }, [currentPage]);
 
-  if (loading || !data) {
+  if (!data) {
     return <FetchStatus loading={loading} error={error} />;
   }
 
@@ -217,9 +195,7 @@ export function TruthSocial() {
       <hr />
       <div id="truthSocialContent" className="scrollarea">
         {data.length === 0 ? (
-          <div className="dk-empty bg-white">
-            No Truth Social posts found
-          </div>
+          <div className="dk-empty bg-white">No Truth Social posts found</div>
         ) : (
           <>
             {data.map((post) => (
@@ -231,11 +207,7 @@ export function TruthSocial() {
         )}
       </div>
       <hr />
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        setCurrentPage={setCurrentPage}
-      />
+      <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
     </main>
   );
 }
