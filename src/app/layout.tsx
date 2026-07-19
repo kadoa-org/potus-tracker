@@ -1,4 +1,5 @@
 import { Navigation } from "@/components/Navigation";
+import { SiteFooter } from "@/kit";
 import "@fontsource-variable/inter";
 import type { Metadata } from "next";
 import "../kit/kit.css";
@@ -85,21 +86,7 @@ export default function RootLayout({
           <div className="w-full md:flex-1 flex flex-col">
             <div className="dk-container py-4">{children}</div>
           </div>
-          <footer className="w-full bg-white border-t border-[#b1b4b6] py-3 px-4 mt-auto">
-            <div className="dk-container text-center">
-              <p className="dk-hint">
-                Open data project by{" "}
-                <a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-link">
-                  Kadoa
-                </a>
-                . For enterprise access,{" "}
-                <a href="mailto:hello@kadoa.com" className="dk-link">
-                  contact us
-                </a>
-                .
-              </p>
-            </div>
-          </footer>
+          <SiteFooter current="potus" />
         </div>
       </body>
     </html>
