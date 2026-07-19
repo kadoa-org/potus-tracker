@@ -48,11 +48,10 @@ a {
   word-break: break-word;
 }
 
-/* Card frame for each page panel: square, 1px ink rule, white. */
+/* Page panel: square, white (no outer border). */
 main {
   @apply md:flex-1 flex flex-col max-w-screen;
   background: var(--dk-bg);
-  border: 1px solid var(--dk-rule);
 }
 .scrollarea {
   @apply md:flex-1 flex flex-col gap-[1px];
