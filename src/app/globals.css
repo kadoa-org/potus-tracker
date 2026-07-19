@@ -55,7 +55,7 @@ main {
   border: 1px solid var(--dk-rule);
 }
 .scrollarea {
-  @apply md:flex-1 md:overflow-auto flex flex-col gap-[1px];
+  @apply md:flex-1 flex flex-col gap-[1px];
   background: var(--dk-rule-soft);
 }
 

@@ -80,9 +80,9 @@ export default function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body>
-        <div className="w-full h-[100dvh] flex flex-col bg-[#f3f2f1]">
+        <div className="w-full min-h-[100dvh] flex flex-col bg-[#f3f2f1]">
           <Navigation />
-          <div className="dk-scroll-area w-full md:flex-1 md:overflow-y-auto">
+          <div className="w-full md:flex-1 flex flex-col">
             <div className="dk-container py-4">{children}</div>
           </div>
           <footer className="w-full bg-white border-t border-[#b1b4b6] py-3 px-4 mt-auto">
