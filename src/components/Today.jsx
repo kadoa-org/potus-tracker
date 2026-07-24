@@ -43,17 +43,30 @@ const Head = ({ title, hint, href, cta }) => (
   </div>
 );
 
-export function Today() {
-  const location = MOCK ? getMockLocation() : null;
-  const schedule = MOCK ? getMockSchedule() : [];
-  const truth = MOCK ? getMockTruth() : [];
-  const news = MOCK ? getMockNews() : [];
-  const nextEvent = MOCK ? getMockNextEvent() : null;
+export function Today({ initial }) {
+  // Mock (local review) reads the fixtures directly; production uses the data
+  // fetched server-side in page.tsx and passed as `initial` (same public APIs
+  // the deep pages use), so the dashboard ships real content in its HTML.
+  const location = MOCK ? getMockLocation() : (initial?.location ?? null);
+  const schedule = MOCK ? getMockSchedule() : (initial?.schedule ?? []);
+  const truth = MOCK ? getMockTruth() : (initial?.truth ?? []);
+  const news = MOCK ? getMockNews() : (initial?.news ?? []);
 
   const todaysEvents = useMemo(
     () => schedule.filter((e) => e.time.startsWith(todayKey())).sort((a, b) => new Date(a.time) - new Date(b.time)),
     [schedule],
   );
+  // Next upcoming event: earliest event still in the future. In mock we use the
+  // fixture so the reviewed layout is stable.
+  const nextEvent = useMemo(() => {
+    if (MOCK) return getMockNextEvent();
+    const now = Date.now();
+    return (
+      [...schedule]
+        .filter((e) => e.time && new Date(e.time).getTime() >= now)
+        .sort((a, b) => new Date(a.time) - new Date(b.time))[0] ?? null
+    );
+  }, [schedule]);
   // Show the most consequential posts (never "low"), highest impact first. Up
   // to 5 so the panel roughly balances the day's schedule beside it instead of
   // leaving a tall empty gap.

@@ -21,6 +21,32 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <Today />;
+// Server-fetch the dashboard's data from the public, edge-cached APIs (the same
+// ones the deep pages use) so the homepage ships real content in its HTML
+// instead of an empty shell. Any failure degrades to an empty section rather
+// than breaking the page.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kadoa.com";
+
+async function getData() {
+  const base = `${SITE}/potus/api`;
+  const j = async (path: string, fallback: unknown) => {
+    try {
+      const r = await fetch(`${base}${path}`, { cache: "no-store" });
+      return r.ok ? await r.json() : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const [loc, sch, tru, nws] = await Promise.all([
+    j("/location", { data: null }),
+    j("/schedule", { data: [] }),
+    j("/feed?type=truth_social&limit=20", { data: [] }),
+    j("/feed?type=news&limit=3", { data: [] }),
+  ]);
+  return { location: loc.data, schedule: sch.data ?? [], truth: tru.data ?? [], news: nws.data ?? [] };
+}
+
+export default async function Page() {
+  const initial = await getData();
+  return <Today initial={initial} />;
 }
