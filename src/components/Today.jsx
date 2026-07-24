@@ -116,30 +116,10 @@ export function Today({ initial }) {
         )}
       </div>
 
-      {/* Row 1: today's schedule + top Truth Social signal */}
+      {/* Row 1: Truth Social leads (most relevant, so it's the first section on
+          mobile and the left column on desktop); today's schedule follows. */}
       <div className="grid md:grid-cols-2 border-t border-[#b1b4b6]">
         <section className="bg-white border-b md:border-b-0 md:border-r border-[#e5e6e7]">
-          <Head title="Today's schedule" hint="All times Eastern (ET)" href="/schedule" cta="Full schedule" />
-          {todaysEvents.length === 0 ? (
-            <div className="dk-empty">No events scheduled today.</div>
-          ) : (
-            <ul>
-              {todaysEvents.map((e) => (
-                <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
-                  <span className="text-[13px] font-semibold text-[#1d70b8] tabular-nums w-[68px] flex-shrink-0">
-                    {timeLabel(e.time)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block">{e.title}</span>
-                    <span className="block dk-hint text-[13px]">{e.locationStr}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="bg-white border-b border-[#e5e6e7]">
           <Head title="Truth Social" hint="Posts ranked by real-world impact" href="/truth" cta="All posts" />
           {topSignal.length === 0 ? (
             <div className="dk-empty">No high or medium impact posts yet.</div>
@@ -154,6 +134,27 @@ export function Today({ initial }) {
                     </span>
                   </div>
                   <p className="font-semibold leading-snug">{p.why_it_matters}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="bg-white border-b border-[#e5e6e7]">
+          <Head title="Today's schedule" hint="All times Eastern (ET)" href="/schedule" cta="Full schedule" />
+          {todaysEvents.length === 0 ? (
+            <div className="dk-empty">No events scheduled today.</div>
+          ) : (
+            <ul>
+              {todaysEvents.map((e) => (
+                <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
+                  <span className="text-[13px] font-semibold text-[#1d70b8] tabular-nums w-[68px] flex-shrink-0">
+                    {timeLabel(e.time)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block">{e.title}</span>
+                    <span className="block dk-hint text-[13px]">{e.locationStr}</span>
+                  </span>
                 </li>
               ))}
             </ul>
