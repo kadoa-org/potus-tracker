@@ -84,7 +84,12 @@ export default function RootLayout({
         <div className="w-full min-h-[100dvh] flex flex-col bg-[#f3f2f1]">
           <Navigation />
           <div className="w-full md:flex-1 flex flex-col">
-            <div className="dk-container py-4">{children}</div>
+            {/* w-full: .dk-container centres with `margin: 0 auto`, but as a
+                flex-column child the auto side-margins disable stretch, so it
+                would otherwise shrink to content width (narrow pages like the
+                schedule collapsed to ~877px). width:100% pins it to the 960px
+                max on every page. */}
+            <div className="dk-container py-4 w-full">{children}</div>
           </div>
           <SiteFooter current="potus" />
         </div>

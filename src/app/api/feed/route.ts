@@ -51,15 +51,18 @@ export async function GET(request: Request) {
         { headers: EDGE_CACHE },
       );
     } else if (type === "truth_social") {
-      const {
-        data: truthSocial,
-        error,
-        count,
-      } = await supabase
-        .from("truth_social")
-        .select("*", { count: "exact" })
-        .order("date", { ascending: false })
-        .range(offset, offset + limit - 1);
+      // Optional server-side filters so pagination stays correct across the
+      // whole dataset (not just the current page). `signal` = impact level,
+      // `category` = domain. Unscored historical rows are excluded once a
+      // filter is applied, which is intended.
+      const signalFilter = searchParams.get("signal");
+      const categoryFilter = searchParams.get("category");
+
+      let query = supabase.from("truth_social").select("*", { count: "exact" }).order("date", { ascending: false });
+      if (signalFilter) query = query.eq("signal", signalFilter);
+      if (categoryFilter) query = query.eq("category", categoryFilter);
+
+      const { data: truthSocial, error, count } = await query.range(offset, offset + limit - 1);
 
       if (error) throw error;
 
@@ -73,8 +76,11 @@ export async function GET(request: Request) {
           original_post_link: item.original_post_link,
           timestamp: item.date,
           type: "Truth Social",
+          signal: item.signal,
+          category: item.category,
+          why_it_matters: item.why_it_matters,
           sentiment: item.sentiment,
-          topics: item.topics,
+          entities: item.entities,
         })) || [];
 
       return NextResponse.json(
@@ -117,8 +123,11 @@ export async function GET(request: Request) {
           link: item.link,
           timestamp: item.date,
           type: "Truth Social",
+          signal: item.signal,
+          category: item.category,
+          why_it_matters: item.why_it_matters,
           sentiment: item.sentiment,
-          topics: item.topics,
+          entities: item.entities,
         })) || [];
 
       // Combine and sort by timestamp

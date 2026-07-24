@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertModal } from "@/components/AlertModal";
-import { GitHubButton, LiveBadge, NavBar, SiteHeader } from "@/kit";
+import { GitHubButton, NavBar, SiteHeader } from "@/kit";
 
 const navItems = [
-  { href: "/whitehouse", label: "White House" },
-  { href: "/truth", label: "Truth Social" },
+  { href: "/", label: "Today" },
   { href: "/schedule", label: "Schedule" },
+  { href: "/truth", label: "Truth Social" },
+  { href: "/whitehouse", label: "White House" },
 ];
 
 // Kit chrome passes both `href` and its `to` alias to LinkComponent; strip
@@ -20,7 +21,7 @@ const NavLink = ({ to: _to, ...props }: { to?: string; [key: string]: unknown })
 export function Navigation() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path || (path === "/whitehouse" && pathname === "/");
+  const isActive = (path: string) => pathname === path;
 
   return (
     <>
@@ -39,7 +40,6 @@ export function Navigation() {
         }
         right={
           <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <LiveBadge>Live</LiveBadge>
             <GitHubButton repo="kadoa-org/potus-tracker" />
             <AlertModal />
           </span>

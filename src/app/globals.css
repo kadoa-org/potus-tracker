@@ -164,3 +164,23 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Today dashboard: 3-class signal meter ─────────────────────────────────
+   Off bars are a light rule; on bars coloured by class (blue = high,
+   ink = medium, faint = low). Three ascending bars. */
+.sig3 {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.sig3 .sig-bar {
+  width: 4px;
+  background: var(--dk-rule);
+}
+.sig3 .sig-bar:nth-child(1) { height: 8px; }
+.sig3 .sig-bar:nth-child(2) { height: 11px; }
+.sig3 .sig-bar:nth-child(3) { height: 14px; }
+.sig-high .sig-bar.on { background: var(--dk-link); }
+.sig-medium .sig-bar.on { background: var(--dk-ink); }
+.sig-low .sig-bar.on { background: var(--dk-faint); }
