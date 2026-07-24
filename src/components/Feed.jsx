@@ -41,6 +41,27 @@ const FeedItem = ({ item }) => (
       <SourceLink item={item} /> &middot; <RelativeTime iso={item.timestamp} />
     </div>
     <div className="mt-1 line-clamp-6 leading-relaxed">{item.summary}</div>
+    {/* Make it unambiguous the body is our AI summary, and link straight to the
+        original release so readers can verify the source. */}
+    <div className="mt-2 flex items-center gap-1.5 text-[13px]">
+      <span className="dk-hint italic">AI summary</span>
+      {item.link && (
+        <>
+          <span className="dk-hint">&middot;</span>
+          <a href={item.link} target="_blank" rel="noreferrer" className="dk-link inline-flex items-center gap-1">
+            Read full article
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+        </>
+      )}
+    </div>
   </div>
 );
 
@@ -120,7 +141,12 @@ export function Feed({ initial }) {
   return (
     <main>
       <div className="dk-section-head p-4 mb-0!">
-        <h2>White House News</h2>
+        <div>
+          <h2>White House News</h2>
+          <p className="dk-hint text-[13px] mt-0.5">
+            Concise AI summaries of official releases. Each links to the full article.
+          </p>
+        </div>
       </div>
       <hr />
       <div id="feedContent" className="scrollarea">
