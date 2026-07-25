@@ -4,6 +4,7 @@ import { addDays, format, isToday, isTomorrow, isYesterday, parseISO, startOfDay
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
+import { cleanEventTitle, eventTimeLabel } from "../lib/schedule";
 import { FetchStatus } from "./FetchStatus.jsx";
 
 // Dynamically import the LeafletMap component with no SSR
@@ -13,36 +14,26 @@ const LeafletMap = dynamic(() => import("./LeafletMap").then((mod) => mod.Leafle
 });
 
 const ScheduleItem = ({ item }) => {
-  // Check if the time string contains timezone offset
-  let displayTime;
-
-  if (item.time.includes("+") || item.time.includes("Z")) {
-    // If it has timezone info, extract time directly to avoid conversion
-    const timeMatch = item.time.match(/T(\d{2}):(\d{2})/);
-    if (timeMatch) {
-      const hours = parseInt(timeMatch[1]);
-      const minutes = timeMatch[2];
-      const period = hours >= 12 ? "PM" : "AM";
-      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-      displayTime = `${displayHours}:${minutes} ${period}`;
-    } else {
-      displayTime = format(new Date(item.time), "h:mm a");
-    }
-  } else {
-    // If no timezone info, parse normally
-    displayTime = format(new Date(item.time), "h:mm a");
-  }
+  // Show the real wall-clock time, or "Time TBD" when the source only gave a
+  // date (so we never print a misleading "12:00 AM"). Strip the "TBD:" prefix.
+  const displayTime = eventTimeLabel(item.time);
 
   return (
     <div className="grid auto-rows-min gap-1 p-4 md:px-6 bg-white">
       <div className="flex items-center gap-2">
-        <div className="text-[13px] font-semibold text-[#1d70b8] tabular-nums whitespace-nowrap">{displayTime}</div>
+        <div
+          className={`text-[13px] font-semibold tabular-nums whitespace-nowrap ${
+            displayTime ? "text-[#1d70b8]" : "text-[#8a9196]"
+          }`}
+        >
+          {displayTime || "Time TBD"}
+        </div>
         <div className="flex-1"></div>
         <div className="flex items-center gap-1 text-sm">
           <span className="dk-hint">{item.locationStr}</span>
         </div>
       </div>
-      <div>{item.title}</div>
+      <div>{cleanEventTitle(item.title)}</div>
     </div>
   );
 };
@@ -182,7 +173,9 @@ export function Schedule({ initial }) {
   return (
     <main>
       <div className="dk-section-head p-4 mb-0!">
-        <h2>Location &amp; Schedule</h2>
+        <h1 className="font-bold text-[17px] leading-[1.3] text-[#0b0c0c] m-0">
+          President Trump&apos;s Schedule Today
+        </h1>
       </div>
       <hr />
 

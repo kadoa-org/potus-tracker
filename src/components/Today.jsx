@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useMemo } from "react";
 import { getMockLocation, getMockNews, getMockNextEvent, getMockSchedule, getMockTruth } from "../lib/mockData";
+import { cleanEventTitle, eventTimeLabel } from "../lib/schedule";
 import { ImpactBadge, SIG } from "./Impact.jsx";
 import { RelativeTime } from "./RelativeTime.jsx";
 
@@ -109,9 +110,11 @@ export function Today({ initial }) {
         {location?.city && !traveling && <p className="mt-2 text-[17px] text-[#505a5f]">{location.city}</p>}
         {nextEvent && (
           <p className="mt-4 text-[17px]">
-            <span className="font-semibold">Next:</span> {nextEvent.title}
+            <span className="font-semibold">Next:</span> {cleanEventTitle(nextEvent.title)}
             {nextEvent.locationStr ? `, ${nextEvent.locationStr}` : ""}
-            <span className="text-[#505a5f]"> · {timeLabel(nextEvent.time)} ET</span>
+            {eventTimeLabel(nextEvent.time) && (
+              <span className="text-[#505a5f]"> · {eventTimeLabel(nextEvent.time)} ET</span>
+            )}
           </p>
         )}
       </div>
@@ -146,17 +149,24 @@ export function Today({ initial }) {
             <div className="dk-empty">No events scheduled today.</div>
           ) : (
             <ul>
-              {todaysEvents.map((e) => (
-                <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
-                  <span className="text-[13px] font-semibold text-[#1d70b8] tabular-nums w-[68px] flex-shrink-0">
-                    {timeLabel(e.time)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block">{e.title}</span>
-                    <span className="block dk-hint text-[13px]">{e.locationStr}</span>
-                  </span>
-                </li>
-              ))}
+              {todaysEvents.map((e) => {
+                const t = eventTimeLabel(e.time);
+                return (
+                  <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
+                    <span
+                      className={`text-[13px] font-semibold tabular-nums w-[68px] flex-shrink-0 ${
+                        t ? "text-[#1d70b8]" : "text-[#8a9196]"
+                      }`}
+                    >
+                      {t || "TBD"}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block">{cleanEventTitle(e.title)}</span>
+                      <span className="block dk-hint text-[13px]">{e.locationStr}</span>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

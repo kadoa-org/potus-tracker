@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Today } from "@/components/Today";
+import { cleanEventTitle } from "@/lib/schedule";
 
 // The "Today" dashboard is the front door: one page answering "where is the
 // president / what's on today" with the schedule, Truth Social signal, location,
@@ -46,7 +47,51 @@ async function getData() {
   return { location: loc.data, schedule: sch.data ?? [], truth: tru.data ?? [], news: nws.data ?? [] };
 }
 
+// FAQ schema targeting the highest-intent queries ("where is trump right now",
+// "what is on trump's schedule today") with a direct answer built from live
+// data. This is what earns the featured snippet and fixes the near-zero CTR on
+// location queries where we already rank in the top 3.
+type Loc = { locationName?: string } | null;
+type SchedEvent = { title?: string; time?: string; locationStr?: string };
+
+function buildFaq(location: Loc, schedule: SchedEvent[]) {
+  const where = location?.locationName
+    ? `President Trump is at ${location.locationName}.`
+    : "President Trump's current location is updated live from his official public schedule.";
+
+  const now = Date.now();
+  const next = [...schedule]
+    .filter((e) => e.time && new Date(e.time).getTime() >= now)
+    .sort((a, b) => new Date(a.time as string).getTime() - new Date(b.time as string).getTime())[0];
+  const scheduleAnswer = next
+    ? `Next up: ${cleanEventTitle(next.title)}${next.locationStr ? ` at ${next.locationStr}` : ""}. See the full public schedule for today, updated live.`
+    : "See President Trump's full daily public schedule, updated live from official sources.";
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Where is President Trump right now?",
+        acceptedAnswer: { "@type": "Answer", text: where },
+      },
+      {
+        "@type": "Question",
+        name: "What is on President Trump's schedule today?",
+        acceptedAnswer: { "@type": "Answer", text: scheduleAnswer },
+      },
+    ],
+  };
+}
+
 export default async function Page() {
   const initial = await getData();
-  return <Today initial={initial} />;
+  const faqLd = buildFaq(initial.location, initial.schedule);
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      <Today initial={initial} />
+    </>
+  );
 }

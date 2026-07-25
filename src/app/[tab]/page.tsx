@@ -3,25 +3,29 @@ import { notFound } from "next/navigation";
 import { Feed } from "@/components/Feed";
 import { Schedule } from "@/components/Schedule";
 import { TruthSocial } from "@/components/TruthSocial";
+import { cleanEventTitle } from "@/lib/schedule";
 
 const tabs = {
   whitehouse: {
     component: Feed,
-    title: "White House News - Live Presidential Actions & Executive Orders",
+    title: "White House News Today - Presidential Actions & Executive Orders",
     description:
-      "Live feed of White House news, presidential actions, and executive orders. Updated in real time from official sources.",
+      "Today's White House news, presidential actions, and executive orders, each summarized and linked to the official release. Updated in real time.",
+    dated: false,
   },
   truth: {
     component: TruthSocial,
-    title: "Trump Truth Social Posts - Live Feed",
+    title: "What Did Trump Post Today? Truth Social Posts Ranked by Impact",
     description:
-      "Every Truth Social post from the President as it happens. Real-time feed with timestamps, no login required.",
+      "Every Trump Truth Social post as it happens, scored by real-world impact so you can skip the noise. See what actually matters, updated in real time.",
+    dated: true,
   },
   schedule: {
     component: Schedule,
-    title: "President's Schedule Today - Daily Public Schedule",
+    title: "Trump Schedule Today - Live Daily Public Schedule",
     description:
-      "The President's daily public schedule: meetings, travel, press events, and location, updated in real time.",
+      "Where is President Trump today? See his full daily public schedule hour by hour: meetings, travel, and events, updated live from official sources.",
+    dated: true,
   },
 } as const;
 
@@ -47,12 +51,23 @@ async function getInitial(key: TabKey) {
   }
 }
 
+// ET date label for freshness in titles (e.g. "Sat, Jul 25"), matching the
+// homepage. Signals "updated today" to searchers scanning the SERP.
+function todayLabelET() {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date());
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
   const key = (await params).tab as TabKey;
   const tab = tabs[key];
   if (!tab) return {};
   const url = `https://www.kadoa.com/potus/${key}`;
-  const title = `${tab.title} | POTUS Tracker`;
+  const title = tab.dated ? `${tab.title} (${todayLabelET()})` : `${tab.title} | POTUS Tracker`;
   return {
     title,
     description: tab.description,
@@ -83,8 +98,36 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
     description: tab.description,
     url: `https://www.kadoa.com/potus/${key}`,
     isAccessibleForFree: true,
+    dateModified: new Date().toISOString(),
     creator: { "@type": "Organization", name: "Kadoa", url: "https://www.kadoa.com" },
   };
+
+  // For the schedule, also emit an ItemList of Events so search engines can read
+  // the actual agenda (name/time/location) — the structured content competitors
+  // rank with. Cap at 20 and skip date-only placeholder rows (midnight).
+  const scheduleEvents = Array.isArray(initial) ? (initial as ScheduleRow[]) : [];
+  const scheduleLd =
+    key === "schedule" && scheduleEvents.length
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "President Trump's public schedule",
+          itemListElement: scheduleEvents
+            .filter((e) => e.time && !/T00:00:00/.test(e.time))
+            .slice(0, 20)
+            .map((e, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Event",
+                name: cleanEventTitle(e.title),
+                startDate: e.time,
+                eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+                ...(e.locationStr ? { location: { "@type": "Place", name: e.locationStr } } : {}),
+              },
+            })),
+        }
+      : null;
 
   // Single full-width column. The alert CTA lives in the header (AlertModal),
   // not in the content flow, so there is no side-rail and nothing to reflow
@@ -92,10 +135,15 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {scheduleLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(scheduleLd) }} />
+      )}
       <Component initial={initial} />
     </>
   );
 }
+
+type ScheduleRow = { title?: string; time?: string; locationStr?: string };
 
 export async function generateStaticParams() {
   return Object.keys(tabs).map((tab) => ({

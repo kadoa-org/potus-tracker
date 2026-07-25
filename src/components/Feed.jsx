@@ -142,7 +142,7 @@ export function Feed({ initial }) {
     <main>
       <div className="dk-section-head p-4 mb-0!">
         <div>
-          <h2>White House News</h2>
+          <h1 className="font-bold text-[17px] leading-[1.3] text-[#0b0c0c] m-0">White House News Today</h1>
           <p className="dk-hint text-[13px] mt-0.5">
             Concise AI summaries of official releases. Each links to the full article.
           </p>
