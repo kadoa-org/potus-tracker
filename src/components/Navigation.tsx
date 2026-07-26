@@ -10,6 +10,7 @@ const navItems = [
   { href: "/schedule", label: "Schedule" },
   { href: "/truth", label: "Truth Social" },
   { href: "/whitehouse", label: "White House" },
+  { href: "/about", label: "About" },
 ];
 
 // Kit chrome passes both `href` and its `to` alias to LinkComponent; strip
