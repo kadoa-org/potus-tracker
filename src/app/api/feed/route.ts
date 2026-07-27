@@ -61,8 +61,13 @@ export async function GET(request: Request) {
       // showed nothing whenever a run of low-impact reposts filled the window.
       const signalFilter = searchParams.get("signal");
       const categoryFilter = searchParams.get("category");
+      // Single-post lookup, used by /truth?post=<id> to pin the linked post.
+      // A post can sit pages deep once newer low-impact posts pile on top, so
+      // the permalink cannot rely on the post being in page 1.
+      const idFilter = searchParams.get("id");
 
       let query = supabase.from("truth_social").select("*", { count: "exact" }).order("date", { ascending: false });
+      if (idFilter) query = query.eq("id", idFilter);
       if (signalFilter) {
         const signals = signalFilter
           .split(",")

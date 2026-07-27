@@ -77,7 +77,13 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
   };
 }
 
-export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
+export default async function TabPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tab: string }>;
+  searchParams: Promise<{ post?: string }>;
+}) {
   const key = (await params).tab as TabKey;
   const tab = tabs[key];
 
@@ -85,8 +91,24 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
     notFound();
   }
 
-  const Component = tab.component as (props: { initial?: unknown }) => ReturnType<typeof Feed>;
+  const Component = tab.component as (props: { initial?: unknown; postId?: string }) => ReturnType<typeof Feed>;
   const initial = await getInitial(key);
+
+  // /truth?post=<id> pins that post above the feed (dashboard "View post" links
+  // land here). Fetched server-side so the pinned post is in the HTML; the
+  // canonical stays /potus/truth, so these URLs never compete with the tab.
+  const postId = key === "truth" ? (await searchParams).post : undefined;
+  let pinned: unknown;
+  if (postId) {
+    try {
+      const r = await fetch(`${SITE}/potus/api/feed?type=truth_social&id=${encodeURIComponent(postId)}&limit=1`, {
+        cache: "no-store",
+      });
+      pinned = r.ok ? ((await r.json()).data?.[0] ?? undefined) : undefined;
+    } catch {
+      pinned = undefined;
+    }
+  }
 
   // Dataset schema (matches the sibling trackers, which earned "Datasets" rich
   // results). This is an open dataset we present — not NewsArticle, which would
@@ -138,7 +160,7 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
       {scheduleLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(scheduleLd) }} />
       )}
-      <Component initial={initial} />
+      <Component initial={pinned !== undefined ? { ...(initial as object), pinned } : initial} postId={postId} />
     </>
   );
 }

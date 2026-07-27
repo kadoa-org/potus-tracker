@@ -177,17 +177,18 @@ export function Today({ initial }) {
                   {/* Own line, same position on every card. In the meta row the
                       link only fit when badge + category + timestamp happened
                       to be short, so it jumped between inline and wrapped from
-                      one card to the next. */}
-                  {(p.original_post_link || p.link) && (
-                    <a
-                      href={p.original_post_link || p.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="dk-link text-[12px] mt-1 inline-block"
-                    >
-                      View post →
-                    </a>
-                  )}
+                      one card to the next.
+
+                      Internal on purpose: the card shows only the AI summary,
+                      and /truth?post= pins the full post text with its impact
+                      analysis and the Truth Social link, which serves "show me
+                      the post" better than sending the reader off-site cold. */}
+                  <Link
+                    href={`/truth?post=${encodeURIComponent(p.id)}`}
+                    className="dk-link text-[12px] mt-1 inline-block"
+                  >
+                    View post →
+                  </Link>
                 </li>
               ))}
             </ul>

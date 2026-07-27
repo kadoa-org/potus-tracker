@@ -173,8 +173,12 @@ const FilterBar = ({ signal, setSignal, category, setCategory }) => (
   </div>
 );
 
-export function TruthSocial({ initial }) {
+export function TruthSocial({ initial, postId }) {
   const itemsPerPage = 10;
+  // The post a dashboard "View post" link points at, pinned above the feed.
+  // Rendered as its own card rather than scrolled to, because the post may sit
+  // pages deep in the feed once newer low-impact posts pile on top of it.
+  const pinned = MOCK && postId ? getMockTruth().find((p) => String(p.id) === String(postId)) : initial?.pinned;
   const [currentPage, setCurrentPage] = useState(1);
   const [signal, setSignalState] = useState("");
   const [category, setCategoryState] = useState("");
@@ -240,7 +244,10 @@ export function TruthSocial({ initial }) {
     fetchData();
   }, [currentPage, signal, category]);
 
-  const viewData = MOCK ? mockView.data : data;
+  // The linked post is usually also near the top of the feed; showing it twice
+  // in a row reads as a bug, so the pinned id is dropped from the list.
+  const rawView = MOCK ? mockView.data : data;
+  const viewData = pinned && rawView ? rawView.filter((p) => String(p.id) !== String(pinned.id)) : rawView;
   const viewPages = MOCK ? mockView.totalPages : totalPages;
   const viewLoading = MOCK ? false : loading;
 
@@ -254,6 +261,14 @@ export function TruthSocial({ initial }) {
           <p className="dk-hint text-[13px] mt-0.5">Every post, scored by real-world impact.</p>
         </div>
       </div>
+      {pinned && (
+        <div className="bg-white border-b border-[#e5e6e7]">
+          <div className="border-l-4 border-[#1d70b8]">
+            <p className="dk-hint text-[12px] px-4 md:px-6 pt-3">Linked post</p>
+            <TruthSocialPost post={pinned} />
+          </div>
+        </div>
+      )}
       <FilterBar signal={signal} setSignal={setSignal} category={category} setCategory={setCategory} />
       <div id="truthSocialContent" className="scrollarea">
         {!viewData || viewLoading ? (
