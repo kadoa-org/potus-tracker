@@ -55,11 +55,21 @@ export async function GET(request: Request) {
       // whole dataset (not just the current page). `signal` = impact level,
       // `category` = domain. Unscored historical rows are excluded once a
       // filter is applied, which is intended.
+      //
+      // `signal` accepts a comma list ("high,medium") because the dashboard
+      // needs "the latest posts that matter": filtering the newest N client-side
+      // showed nothing whenever a run of low-impact reposts filled the window.
       const signalFilter = searchParams.get("signal");
       const categoryFilter = searchParams.get("category");
 
       let query = supabase.from("truth_social").select("*", { count: "exact" }).order("date", { ascending: false });
-      if (signalFilter) query = query.eq("signal", signalFilter);
+      if (signalFilter) {
+        const signals = signalFilter
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (signals.length > 0) query = query.in("signal", signals);
+      }
       if (categoryFilter) query = query.eq("category", categoryFilter);
 
       const { data: truthSocial, error, count } = await query.range(offset, offset + limit - 1);

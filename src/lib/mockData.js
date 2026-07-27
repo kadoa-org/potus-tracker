@@ -68,6 +68,14 @@ export function getMockSchedule() {
       title: "Signs proclamations and executive actions",
       locationStr: "Oval Office",
     },
+    // Filler for a packed day, so the dashboard's schedule cap (and its
+    // "+N more" footer) is visible in local review.
+    { id: "s6", time: etToday("08:45"), title: "Morning staff time", locationStr: "Oval Office" },
+    { id: "s7", time: etToday("08:00"), title: "Breakfast with congressional leadership", locationStr: "The White House" },
+    { id: "s8", time: etToday("18:00"), title: "Returns to the White House", locationStr: "The White House" },
+    { id: "s9", time: etToday("19:30"), title: "Dinner with donors", locationStr: "The White House" },
+    { id: "s10", time: etToday("20:45"), title: "Delivers remarks at reception", locationStr: "East Room" },
+    { id: "s11", time: etToday("07:15"), title: "Departs Mar-a-Lago", locationStr: "Palm Beach, FL" },
     {
       id: "y1",
       time: etDay(-1, "14:00"),

@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { getMockLocation, getMockNews, getMockNextEvent, getMockSchedule, getMockTruth } from "../lib/mockData";
 import { cleanEventTitle, eventTimeLabel } from "../lib/schedule";
-import { ImpactBadge, SIG } from "./Impact.jsx";
+import { ImpactBadge } from "./Impact.jsx";
 import { RelativeTime } from "./RelativeTime.jsx";
 
 const MOCK = process.env.NEXT_PUBLIC_POTUS_MOCK === "1";
+
+/** Most entries the dashboard schedule panel shows before deferring to /schedule. */
+const SCHEDULE_CAP = 8;
 
 const timeLabel = (t) => {
   if (!t) return "";
@@ -68,20 +71,36 @@ export function Today({ initial }) {
         .sort((a, b) => new Date(a.time) - new Date(b.time))[0] ?? null
     );
   }, [schedule]);
-  // Show the most consequential posts (never "low"), highest impact first. Up
-  // to 5 so the panel roughly balances the day's schedule beside it instead of
-  // leaving a tall empty gap.
+  // Latest posts that matter, newest first. Production already receives only
+  // high+medium (filtered server-side, so the panel is never empty just because
+  // recent posts were reposts); the filter here re-applies that for the mock
+  // fixtures, which carry all impact levels.
   const topSignal = useMemo(
     () =>
       truth
-        .filter((p) => p.signal !== "low")
-        .sort(
-          (a, b) =>
-            (SIG[b.signal]?.rank ?? 0) - (SIG[a.signal]?.rank ?? 0) || new Date(b.timestamp) - new Date(a.timestamp),
-        )
-        .slice(0, 5),
+        .filter((p) => p.signal === "high" || p.signal === "medium")
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 8),
     [truth],
   );
+
+  // Cap the schedule panel: a busy day runs 15+ entries and the column grows
+  // far past the Truth Social panel beside it. What is still ahead is kept in
+  // full; past events only fill leftover slots (most recent first), so in the
+  // evening the panel is not just history. Events with no wall-clock time
+  // (TBD) count as upcoming, same as the "Next:" line above. The comparison
+  // matches the nextEvent memo, so the two can never disagree about what is
+  // upcoming.
+  const scheduleView = useMemo(() => {
+    if (todaysEvents.length <= SCHEDULE_CAP) return { events: todaysEvents, hidden: 0 };
+    const now = Date.now();
+    const isPast = (e) => Boolean(eventTimeLabel(e.time)) && new Date(e.time).getTime() < now;
+    const upcoming = todaysEvents.filter((e) => !isPast(e)).slice(0, SCHEDULE_CAP);
+    const past = todaysEvents.filter(isPast);
+    const fill = past.slice(Math.max(0, past.length - (SCHEDULE_CAP - upcoming.length)));
+    const events = [...fill, ...upcoming];
+    return { events, hidden: todaysEvents.length - events.length };
+  }, [todaysEvents]);
 
   const traveling = location?.status === "traveling";
   const answer = location
@@ -123,7 +142,7 @@ export function Today({ initial }) {
           mobile and the left column on desktop); today's schedule follows. */}
       <div className="grid md:grid-cols-2 border-t border-[#b1b4b6]">
         <section className="bg-white border-b md:border-b-0 md:border-r border-[#e5e6e7]">
-          <Head title="Truth Social" hint="Posts ranked by real-world impact" href="/truth" cta="All posts" />
+          <Head title="Truth Social" hint="Latest high and medium impact posts" href="/truth" cta="All posts" />
           {topSignal.length === 0 ? (
             <div className="dk-empty">No high or medium impact posts yet.</div>
           ) : (
@@ -137,6 +156,19 @@ export function Today({ initial }) {
                     </span>
                   </div>
                   <p className="font-semibold leading-snug">{p.why_it_matters}</p>
+                  {/* why_it_matters is model-written, not a quote of the post, so
+                      it is labelled and paired with the way to read the source. */}
+                  <p className="dk-hint text-[12px] mt-1">
+                    AI summary
+                    {(p.original_post_link || p.link) && (
+                      <>
+                        {" · "}
+                        <a href={p.original_post_link || p.link} target="_blank" rel="noreferrer" className="dk-link">
+                          View post on Truth Social
+                        </a>
+                      </>
+                    )}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -148,26 +180,35 @@ export function Today({ initial }) {
           {todaysEvents.length === 0 ? (
             <div className="dk-empty">No events scheduled today.</div>
           ) : (
-            <ul>
-              {todaysEvents.map((e) => {
-                const t = eventTimeLabel(e.time);
-                return (
-                  <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
-                    <span
-                      className={`text-[13px] font-semibold tabular-nums w-[68px] flex-shrink-0 ${
-                        t ? "text-[#1d70b8]" : "text-[#8a9196]"
-                      }`}
-                    >
-                      {t || "TBD"}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block">{cleanEventTitle(e.title)}</span>
-                      <span className="block dk-hint text-[13px]">{e.locationStr}</span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <ul>
+                {scheduleView.events.map((e) => {
+                  const t = eventTimeLabel(e.time);
+                  return (
+                    <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
+                      <span
+                        className={`text-[13px] font-semibold tabular-nums w-[68px] flex-shrink-0 ${
+                          t ? "text-[#1d70b8]" : "text-[#8a9196]"
+                        }`}
+                      >
+                        {t || "TBD"}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block">{cleanEventTitle(e.title)}</span>
+                        <span className="block dk-hint text-[13px]">{e.locationStr}</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              {scheduleView.hidden > 0 && (
+                <div className="p-3 md:px-6 border-t border-[#f0efed]">
+                  <Link href="/schedule" className="dk-link text-[13px]">
+                    +{scheduleView.hidden} more events today · Full schedule →
+                  </Link>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>
