@@ -89,7 +89,13 @@ const TruthSocialPost = ({ post }) => {
                 rel="noreferrer"
                 className="dk-link inline-flex items-center gap-1 text-[13px]"
               >
-                <span>View on Truth Social</span>
+                {/* Historical rows may still carry the aggregator URL (the RSS
+                    feed only provides those; ingestion resolves the real one).
+                    The label must not promise Truth Social when the href goes
+                    elsewhere. */}
+                <span>
+                  {/truthsocial\.com/.test(post.original_post_link) ? "View on Truth Social" : "View original post"}
+                </span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
