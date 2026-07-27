@@ -170,23 +170,24 @@ export function Today({ initial }) {
                     <span className="dk-hint text-[12px]">
                       · <RelativeTime iso={p.timestamp} />
                     </span>
-                    {/* Anchored right rather than dot-separated: a separator
-                        prefix orphans as "· View post" on its own line when the
-                        meta row wraps at column width. */}
-                    {(p.original_post_link || p.link) && (
-                      <a
-                        href={p.original_post_link || p.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="dk-link text-[12px] ml-auto whitespace-nowrap"
-                      >
-                        View post →
-                      </a>
-                    )}
                   </div>
                   {/* Clamped so one long summary cannot unbalance the column;
-                      the post link above carries the full context. */}
+                      the post link below carries the full context. */}
                   <p className="font-semibold leading-snug line-clamp-3">{p.why_it_matters}</p>
+                  {/* Own line, same position on every card. In the meta row the
+                      link only fit when badge + category + timestamp happened
+                      to be short, so it jumped between inline and wrapped from
+                      one card to the next. */}
+                  {(p.original_post_link || p.link) && (
+                    <a
+                      href={p.original_post_link || p.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="dk-link text-[12px] mt-1 inline-block"
+                    >
+                      View post →
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
