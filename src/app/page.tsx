@@ -44,7 +44,7 @@ async function getData() {
     // Filtered server-side to the posts the panel actually shows. Fetching the
     // newest 20 unfiltered and dropping "low" on the client left the panel
     // empty whenever a run of reposts filled the window.
-    j("/feed?type=truth_social&signal=high,medium&limit=8", { data: [] }),
+    j("/feed?type=truth_social&signal=high,medium&limit=5", { data: [] }),
     j("/feed?type=news&limit=3", { data: [] }),
   ]);
   return { location: loc.data, schedule: sch.data ?? [], truth: tru.data ?? [], news: nws.data ?? [] };

@@ -10,7 +10,14 @@ import { RelativeTime } from "./RelativeTime.jsx";
 
 const MOCK = process.env.NEXT_PUBLIC_POTUS_MOCK === "1";
 
-/** Most entries the dashboard schedule panel shows before deferring to /schedule. */
+/**
+ * Panel caps. These two sit side by side on desktop, so they are balanced by
+ * visual height, not item count: a Truth Social item (badge row + a clamped
+ * summary + meta) is about twice as tall as a schedule row, so 5 posts fill
+ * roughly the same column as 8 schedule rows plus the overflow footer. Both
+ * panels are a taste that defers to a deep page, not the archive.
+ */
+const TRUTH_CAP = 5;
 const SCHEDULE_CAP = 8;
 
 const timeLabel = (t) => {
@@ -80,7 +87,7 @@ export function Today({ initial }) {
       truth
         .filter((p) => p.signal === "high" || p.signal === "medium")
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-        .slice(0, 8),
+        .slice(0, TRUTH_CAP),
     [truth],
   );
 
@@ -142,7 +149,16 @@ export function Today({ initial }) {
           mobile and the left column on desktop); today's schedule follows. */}
       <div className="grid md:grid-cols-2 border-t border-[#b1b4b6]">
         <section className="bg-white border-b md:border-b-0 md:border-r border-[#e5e6e7]">
-          <Head title="Truth Social" hint="Latest high and medium impact posts" href="/truth" cta="All posts" />
+          {/* The hint carries the AI disclosure once for the whole list. Every
+              item is a model-written summary, and a uniform property of the
+              list belongs in the header; repeating "AI summary" on each row was
+              noise that also made rows taller than the schedule beside them. */}
+          <Head
+            title="Truth Social"
+            hint="AI summaries of high and medium impact posts"
+            href="/truth"
+            cta="All posts"
+          />
           {topSignal.length === 0 ? (
             <div className="dk-empty">No high or medium impact posts yet.</div>
           ) : (
@@ -154,21 +170,23 @@ export function Today({ initial }) {
                     <span className="dk-hint text-[12px]">
                       · <RelativeTime iso={p.timestamp} />
                     </span>
-                  </div>
-                  <p className="font-semibold leading-snug">{p.why_it_matters}</p>
-                  {/* why_it_matters is model-written, not a quote of the post, so
-                      it is labelled and paired with the way to read the source. */}
-                  <p className="dk-hint text-[12px] mt-1">
-                    AI summary
+                    {/* Anchored right rather than dot-separated: a separator
+                        prefix orphans as "· View post" on its own line when the
+                        meta row wraps at column width. */}
                     {(p.original_post_link || p.link) && (
-                      <>
-                        {" · "}
-                        <a href={p.original_post_link || p.link} target="_blank" rel="noreferrer" className="dk-link">
-                          View post on Truth Social
-                        </a>
-                      </>
+                      <a
+                        href={p.original_post_link || p.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="dk-link text-[12px] ml-auto whitespace-nowrap"
+                      >
+                        View post →
+                      </a>
                     )}
-                  </p>
+                  </div>
+                  {/* Clamped so one long summary cannot unbalance the column;
+                      the post link above carries the full context. */}
+                  <p className="font-semibold leading-snug line-clamp-3">{p.why_it_matters}</p>
                 </li>
               ))}
             </ul>
