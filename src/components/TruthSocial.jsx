@@ -261,10 +261,7 @@ export function TruthSocial({ initial, postId }) {
     <main>
       <div className="dk-section-head p-4 md:px-6 mb-0!">
         <div>
-          <h1 className="font-bold text-[17px] leading-[1.3] text-[#0b0c0c] m-0">
-            Trump&apos;s Truth Social Posts, Ranked by Impact
-          </h1>
-          <p className="dk-hint text-[13px] mt-0.5">Every post, scored by real-world impact.</p>
+          <h1 className="font-bold text-[17px] leading-[1.3] text-[#0b0c0c] m-0">Trump&apos;s Truth Social Posts</h1>
         </div>
       </div>
       {pinned && (
