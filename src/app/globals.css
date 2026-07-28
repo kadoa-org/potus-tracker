@@ -166,8 +166,10 @@ main {
 }
 
 /* ── Today dashboard: 3-class signal meter ─────────────────────────────────
-   Off bars are a light rule; on bars coloured by class (blue = high,
-   ink = medium, faint = low). Three ascending bars. */
+   Off bars are a light rule; on bars colour-code severity (red = high,
+   amber = medium, faint = low). Low stays grey on purpose: it means "noise",
+   and a colour would promote it. Amber is defined here because the shared kit
+   palette has no amber token and kit.css is synced from upstream. */
 .sig3 {
   display: inline-flex;
   align-items: flex-end;
@@ -181,6 +183,6 @@ main {
 .sig3 .sig-bar:nth-child(1) { height: 8px; }
 .sig3 .sig-bar:nth-child(2) { height: 11px; }
 .sig3 .sig-bar:nth-child(3) { height: 14px; }
-.sig-high .sig-bar.on { background: var(--dk-link); }
-.sig-medium .sig-bar.on { background: var(--dk-ink); }
+.sig-high .sig-bar.on { background: var(--dk-red); }
+.sig-medium .sig-bar.on { background: #e08600; }
 .sig-low .sig-bar.on { background: var(--dk-faint); }

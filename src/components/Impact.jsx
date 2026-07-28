@@ -36,7 +36,7 @@ const ENTITY_TONE = {
   other: "grey",
 };
 
-// The 3-bar impact meter (blue = high, ink = medium, faint = low). Decorative;
+// The 3-bar impact meter (red = high, amber = medium, faint = low). Decorative;
 // the text label beside it carries the meaning for screen readers.
 export function SignalMini({ signal }) {
   const bars = SIG[signal]?.bars ?? 1;
