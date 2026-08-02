@@ -11,21 +11,21 @@ const tabs = {
     title: "White House News Today - Presidential Actions & Executive Orders",
     description:
       "Today's White House news, presidential actions, and executive orders, each summarized and linked to the official release. Updated in real time.",
-    dated: false,
+    brand: true,
   },
   truth: {
     component: TruthSocial,
     title: "What Did Trump Post Today? Truth Social Posts Ranked by Impact",
     description:
       "Every Trump Truth Social post as it happens, scored by real-world impact so you can skip the noise. See what actually matters, updated in real time.",
-    dated: true,
+    brand: false,
   },
   schedule: {
     component: Schedule,
     title: "Trump Schedule Today - Live Daily Public Schedule",
     description:
       "Where is President Trump today? See his full daily public schedule hour by hour: meetings, travel, and events, updated live from official sources.",
-    dated: true,
+    brand: false,
   },
 } as const;
 
@@ -51,23 +51,18 @@ async function getInitial(key: TabKey) {
   }
 }
 
-// ET date label for freshness in titles (e.g. "Sat, Jul 25"), matching the
-// homepage. Signals "updated today" to searchers scanning the SERP.
-function todayLabelET() {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(new Date());
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
   const key = (await params).tab as TabKey;
   const tab = tabs[key];
   if (!tab) return {};
   const url = `https://www.kadoa.com/potus/${key}`;
-  const title = tab.dated ? `${tab.title} (${todayLabelET()})` : `${tab.title} | POTUS Tracker`;
+  // No date stamp in the title. It was meant to signal freshness, but the SERP
+  // shows whatever Google last crawled — so on every day except the crawl day it
+  // advertised a stale date next to competitors showing today's. /potus/schedule
+  // ranks position ~6.5 for "trump schedule today" and converts at 1.6%, while
+  // this site's own pages at the same position convert at 5-6%. The word "today"
+  // carries the query match and never goes stale.
+  const title = tab.brand ? `${tab.title} | POTUS Tracker` : tab.title;
   return {
     title,
     description: tab.description,

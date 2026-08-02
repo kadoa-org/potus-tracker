@@ -4,17 +4,17 @@ import { cleanEventTitle } from "@/lib/schedule";
 
 // The "Today" dashboard is the front door: one page answering "where is the
 // president / what's on today" with the schedule, Truth Social signal, location,
-// and White House news at a glance. Date-stamped title for freshness + the top
-// query family ("president schedule today", "where is trump today").
-const todayLabel = new Intl.DateTimeFormat("en-US", {
-  timeZone: "America/New_York",
-  weekday: "long",
-  month: "long",
-  day: "numeric",
-}).format(new Date());
-
+// and White House news at a glance, targeting the top query family ("president
+// schedule today", "where is trump today").
+//
+// No date stamp in the title. It was meant to signal freshness, but a SERP shows
+// whatever Google last crawled, so on every day except the crawl day it
+// advertised a stale date. Worse here than on the tab pages: `metadata` is a
+// static object evaluated once at module load, so the date was pinned to when
+// the server process started rather than to the request. "Today" carries the
+// query match and never goes stale.
 export const metadata: Metadata = {
-  title: `Where is the President Today? Live Location & Schedule (${todayLabel})`,
+  title: "Where is the President Today? Live Location & Schedule",
   description:
     "Where is President Trump right now, what is on his schedule today, and what has he just said? Live location, public schedule, and Truth Social posts scored by relevance, updated in real time.",
   alternates: { canonical: "https://www.kadoa.com/potus" },
