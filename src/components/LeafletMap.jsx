@@ -31,7 +31,9 @@ export function LeafletMap({ location }) {
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        // OSM requires a Referer; the hosting proxy's same-origin policy strips it.
+        referrerPolicy="strict-origin-when-cross-origin"
       />
       <Marker position={[location.lat, location.lon]}>
         <Popup>
@@ -42,4 +44,4 @@ export function LeafletMap({ location }) {
       </Marker>
     </MapContainer>
   );
-} 
+}
