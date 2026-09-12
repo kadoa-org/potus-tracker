@@ -4,6 +4,7 @@ import { addDays, format, isToday, isTomorrow, isYesterday, parseISO, startOfDay
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
+import { hasMapCoordinates } from "../lib/location";
 import { cleanEventTitle, eventTimeLabel } from "../lib/schedule";
 import { FetchStatus } from "./FetchStatus.jsx";
 
@@ -169,6 +170,7 @@ export function Schedule({ initial }) {
   };
 
   const groupedData = schedule ? groupEventsByDay(schedule) : {};
+  const canShowMap = hasMapCoordinates(location);
 
   return (
     <main>
@@ -220,14 +222,20 @@ export function Schedule({ initial }) {
                 </div>
                 <div className="dk-hint">Location:</div>
                 <div>{location.locationName || "Unknown"}</div>
-                <div className="dk-hint">Coordinates:</div>
-                <div>
-                  {location.lat.toFixed(6)}, {location.lon.toFixed(6)}
+                {canShowMap && (
+                  <>
+                    <div className="dk-hint">Coordinates:</div>
+                    <div>{location.lat.toFixed(6)}, {location.lon.toFixed(6)}</div>
+                  </>
+                )}
+              </div>
+              {canShowMap ? (
+                <div className="mt-3 h-[400px] w-full relative overflow-hidden border border-[#b1b4b6]">
+                  <LeafletMap location={location} />
                 </div>
-              </div>
-              <div className="mt-3 h-[400px] w-full relative overflow-hidden border border-[#b1b4b6]">
-                <LeafletMap location={location} />
-              </div>
+              ) : (
+                <div className="dk-hint mt-3">Map unavailable. Coordinates have not been provided for this location.</div>
+              )}
             </>
           )}
           {!locationLoading && !locationError && !location && <div className="dk-hint">No location data available</div>}
