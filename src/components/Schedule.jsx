@@ -5,39 +5,16 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
 import { hasMapCoordinates } from "../lib/location";
-import { cleanEventTitle, eventTimeLabel } from "../lib/schedule";
+import { eventTimeLabel, inDayOrder } from "../lib/schedule";
+import { SectionHeading } from "../kit";
 import { FetchStatus } from "./FetchStatus.jsx";
+import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
 
 // Dynamically import the LeafletMap component with no SSR
 const LeafletMap = dynamic(() => import("./LeafletMap").then((mod) => mod.LeafletMap), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full dk-hint">Loading map...</div>,
 });
-
-const ScheduleItem = ({ item }) => {
-  // Show the real wall-clock time, or "Time TBD" when the source only gave a
-  // date (so we never print a misleading "12:00 AM"). Strip the "TBD:" prefix.
-  const displayTime = eventTimeLabel(item.time);
-
-  return (
-    <div className="grid auto-rows-min gap-1 p-4 md:px-6 bg-white">
-      <div className="flex items-center gap-2">
-        <div
-          className={`text-[13px] font-semibold tabular-nums whitespace-nowrap ${
-            displayTime ? "text-[#1d70b8]" : "text-[#8a9196]"
-          }`}
-        >
-          {displayTime || "Time TBD"}
-        </div>
-        <div className="flex-1"></div>
-        <div className="flex items-center gap-1 text-sm">
-          <span className="dk-hint">{item.locationStr}</span>
-        </div>
-      </div>
-      <div>{cleanEventTitle(item.title)}</div>
-    </div>
-  );
-};
 
 // Deterministic day label from the date STRING (fixed UTC parse) so the server
 // and client first render match. "Today/Tomorrow/Yesterday" is relative to now,
@@ -64,18 +41,11 @@ const DayGroup = ({ date, events }) => {
   }, [date]);
 
   return (
-    <div>
-      <div
-        className="px-4 py-2 bg-[#f3f2f1] border-y border-[#e5e6e7] font-semibold text-[13px]"
-        suppressHydrationWarning
-      >
+    <div className="mb-6">
+      <h3 className="font-bold text-[19px] mb-5" suppressHydrationWarning>
         {dayLabel}
-      </div>
-      <div className="flex flex-col gap-[1px]">
-        {events.map((item) => (
-          <ScheduleItem key={item.id} item={item} />
-        ))}
-      </div>
+      </h3>
+      <ScheduleTimeline events={inDayOrder(events)} headingLevel="h4" />
     </div>
   );
 };
@@ -172,91 +142,52 @@ export function Schedule({ initial }) {
   const groupedData = schedule ? groupEventsByDay(schedule) : {};
   const canShowMap = hasMapCoordinates(location);
 
+  // "Sep 26, 2026 at 12:00 PM" from the stored Eastern wall-clock time, which carries a +00:00 offset.
+  const updatedLabel = (() => {
+    const m = location?.time?.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!m) return location?.time ? format(new Date(location.time), "PPp") : null;
+    return `${format(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])), "MMM d, yyyy")} at ${eventTimeLabel(location.time) ?? "12:00 AM"} ET`;
+  })();
+
   return (
     <main>
-      <div className="dk-section-head p-4 mb-0!">
-        <h1 className="font-bold text-[17px] leading-[1.3] text-[#0b0c0c] m-0">
-          President Trump&apos;s Schedule Today
-        </h1>
+      <div className="mb-8">
+        <h1 className="dk-h1">President Trump&apos;s Schedule Today</h1>
+        <p className="text-[19px] text-[#505a5f] m-0">His public schedule and latest known location, updated live.</p>
       </div>
-      <hr />
 
-      {/* Location Section */}
-      <div className="scrollarea">
-        <div className="p-4 bg-white">
-          <h3 className="font-semibold text-[15px] mb-2">Current Location</h3>
-          {locationLoading && <FetchStatus loading={true} />}
-          {locationError && <FetchStatus error={locationError} />}
-          {!locationLoading && !locationError && location && (
-            <>
-              <div className="grid grid-cols-[10rem_1fr] gap-2 text-sm">
-                <div className="dk-hint">Last updated:</div>
-                <div>
-                  {(() => {
-                    if (location.time && (location.time.includes("+") || location.time.includes("Z"))) {
-                      // Extract date and time directly from ISO string
-                      const match = location.time.match(/(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
-                      if (match) {
-                        const dateStr = match[1];
-                        const hours = parseInt(match[2]);
-                        const minutes = match[3];
-                        const period = hours >= 12 ? "PM" : "AM";
-                        const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-                        const timeStr = `${displayHours}:${minutes} ${period}`;
-
-                        // Format the date
-                        const dateParts = dateStr.split("-");
-                        const date = new Date(
-                          parseInt(dateParts[0]),
-                          parseInt(dateParts[1]) - 1,
-                          parseInt(dateParts[2]),
-                        );
-                        const dateFormatted = format(date, "MMM d, yyyy");
-
-                        return `${dateFormatted} at ${timeStr}`;
-                      }
-                    }
-                    // Fallback for normal dates
-                    return format(new Date(location.time), "PPp");
-                  })()}
-                </div>
-                <div className="dk-hint">Location:</div>
-                <div>{location.locationName || "Unknown"}</div>
-                {canShowMap && (
-                  <>
-                    <div className="dk-hint">Coordinates:</div>
-                    <div>{location.lat.toFixed(6)}, {location.lon.toFixed(6)}</div>
-                  </>
-                )}
+      {locationLoading && <FetchStatus loading={true} />}
+      {locationError && <FetchStatus error={locationError} />}
+      {!locationLoading && !locationError && location && (
+        <>
+          {/* One card answers "where is he": the place in the title, when it was last updated, then the map. A
+              separate headline row repeated the same two facts. */}
+          <section className="dk-card">
+            <SectionHeading
+              title={`Current location: ${location.locationName || "Unknown"}`}
+              description={canShowMap ? undefined : "No map: coordinates have not been provided for this location."}
+              date={updatedLabel ? `Updated ${updatedLabel}` : undefined}
+            />
+            {canShowMap && (
+              <div className="dk-card__panel h-[400px] relative overflow-hidden" style={{ padding: 0 }}>
+                <LeafletMap location={location} />
               </div>
-              {canShowMap ? (
-                <div className="mt-3 h-[400px] w-full relative overflow-hidden border border-[#b1b4b6]">
-                  <LeafletMap location={location} />
-                </div>
-              ) : (
-                <div className="dk-hint mt-3">Map unavailable. Coordinates have not been provided for this location.</div>
-              )}
-            </>
-          )}
-          {!locationLoading && !locationError && !location && <div className="dk-hint">No location data available</div>}
-        </div>
-        <hr />
-        <div className="p-4 bg-white">
-          <h3 className="font-semibold text-[15px]">President's Public Schedule</h3>
-          <p className="dk-hint mt-1">All times are Eastern Time (ET)</p>
-        </div>
+            )}
+          </section>
+        </>
+      )}
+      {!locationLoading && !locationError && !location && <div className="dk-hint">No location data available</div>}
+
+      <div className="dk-section">
+        <SectionHeading title="Public schedule" description="All times Eastern (ET). The last seven days with events, newest day first." />
         {scheduleLoading ? (
-          <div className="p-4">
-            <FetchStatus loading={true} />
-          </div>
+          <FetchStatus loading={true} />
         ) : scheduleError ? (
-          <div className="p-4">
-            <FetchStatus error={scheduleError} />
-          </div>
+          <FetchStatus error={scheduleError} />
         ) : (
           <>
             {Object.keys(groupedData).length === 0 ? (
-              <div className="dk-empty bg-white">No scheduled events found</div>
+              <div className="dk-empty">No scheduled events found</div>
             ) : (
               Object.entries(groupedData).map(([date, events]) => <DayGroup key={date} date={date} events={events} />)
             )}

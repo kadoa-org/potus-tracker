@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { mergeDuplicateEvents } from "@/lib/schedule";
 
 // Public read data — cache at Vercel's edge so scraping/spam serves from the
 // CDN instead of hammering Supabase. Data refreshes on the aggregator schedule.
@@ -27,7 +28,7 @@ export async function GET() {
           lng: item.longitude,
         },
       })) || [];
-    return NextResponse.json({ data: formattedSchedule }, { headers: EDGE_CACHE });
+    return NextResponse.json({ data: mergeDuplicateEvents(formattedSchedule) }, { headers: EDGE_CACHE });
   } catch (error) {
     console.error("Error fetching schedule data:", error);
     return NextResponse.json({ error: "Failed to fetch schedule data" }, { status: 500 });

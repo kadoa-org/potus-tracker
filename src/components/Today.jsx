@@ -3,9 +3,12 @@
 import { format } from "date-fns";
 import Link from "next/link";
 import { useMemo } from "react";
-import { getMockLocation, getMockNews, getMockNextEvent, getMockSchedule, getMockTruth } from "../lib/mockData";
-import { cleanEventTitle, eventTimeLabel } from "../lib/schedule";
-import { ImpactBadge } from "./Impact.jsx";
+import { getMockLocation, getMockNews, getMockSchedule, getMockTruth } from "../lib/mockData";
+import { govDate, govDateTime } from "../lib/feed";
+import { cleanEventTitle, eventTimeLabel, govTime, inDayOrder, isUpcoming } from "../lib/schedule";
+import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
+import { KeyFigures, SectionHeading } from "../kit";
+import { CATEGORY_LABEL } from "./Impact.jsx";
 import { RelativeTime } from "./RelativeTime.jsx";
 
 const MOCK = process.env.NEXT_PUBLIC_POTUS_MOCK === "1";
@@ -35,23 +38,29 @@ const dateLabel = (t) => {
   const [y, mo, d] = (m ? m[1] : t).split("-").map(Number);
   return format(new Date(y, mo - 1, d), "EEEE, MMMM d");
 };
-const todayKey = () => {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+// Today's date in Washington. The schedule stores Eastern wall-clock times, so its date part is already an ET date;
+// a UTC "today" moved the page to tomorrow's schedule at 8 PM ET.
+const etDate = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(d);
+const todayKey = () => etDate(new Date());
+// Headline cells hold at most two short lines under the value, as UKHSA's do. Schedule entries all open with "The President",
+// which says nothing on a page about the President, so it is dropped: "Attends the University of Tennessee ...".
+const shortEvent = (title) => {
+  const t = cleanEventTitle(title).replace(/^the president\s+/i, "");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+// White House categories arrive plural ("Executive Orders"); a single release reads as one.
+const singular = (c) => {
+  const raw = c || "News";
+  // Only a one-kind category is made singular; "Nominations & Appointments" stays as it is.
+  const one = raw.includes("&") ? raw : raw.replace(/ies$/, "y").replace(/s$/, "");
+  // Sentence case, as GOV.UK writes labels: "Executive order".
+  return one.charAt(0).toUpperCase() + one.slice(1).toLowerCase();
 };
 
-const Head = ({ title, hint, href, cta }) => (
-  <div className="flex items-baseline justify-between gap-3 p-4 md:px-6 border-b border-[#e5e6e7]">
-    <div className="min-w-0">
-      <h2 className="font-bold text-[17px]">{title}</h2>
-      {hint && <p className="dk-hint text-[12px] mt-0.5">{hint}</p>}
-    </div>
-    {href && (
-      <Link href={href} className="dk-link text-[13px] whitespace-nowrap">
-        {cta} →
-      </Link>
-    )}
-  </div>
+const More = ({ href, children }) => (
+  <Link href={href} className="dk-link text-[16px] whitespace-nowrap">
+    {children}
+  </Link>
 );
 
 export function Today({ initial }) {
@@ -61,23 +70,13 @@ export function Today({ initial }) {
   const location = MOCK ? getMockLocation() : (initial?.location ?? null);
   const schedule = MOCK ? getMockSchedule() : (initial?.schedule ?? []);
   const truth = MOCK ? getMockTruth() : (initial?.truth ?? []);
-  const news = MOCK ? getMockNews() : (initial?.news ?? []);
+  const allNews = MOCK ? getMockNews() : (initial?.news ?? []);
+  const news = allNews.slice(0, 3);
 
   const todaysEvents = useMemo(
     () => schedule.filter((e) => e.time.startsWith(todayKey())).sort((a, b) => new Date(a.time) - new Date(b.time)),
     [schedule],
   );
-  // Next upcoming event: earliest event still in the future. In mock we use the
-  // fixture so the reviewed layout is stable.
-  const nextEvent = useMemo(() => {
-    if (MOCK) return getMockNextEvent();
-    const now = Date.now();
-    return (
-      [...schedule]
-        .filter((e) => e.time && new Date(e.time).getTime() >= now)
-        .sort((a, b) => new Date(a.time) - new Date(b.time))[0] ?? null
-    );
-  }, [schedule]);
   // Latest posts that matter, newest first. Production already receives only
   // high+medium (filtered server-side, so the panel is never empty just because
   // recent posts were reposts); the filter here re-applies that for the mock
@@ -96,12 +95,11 @@ export function Today({ initial }) {
   // full; past events only fill leftover slots (most recent first), so in the
   // evening the panel is not just history. Events with no wall-clock time
   // (TBD) count as upcoming, same as the "Next:" line above. The comparison
-  // matches the nextEvent memo, so the two can never disagree about what is
+  // matches the headline event, so the two can never disagree about what is
   // upcoming.
   const scheduleView = useMemo(() => {
     if (todaysEvents.length <= SCHEDULE_CAP) return { events: todaysEvents, hidden: 0 };
-    const now = Date.now();
-    const isPast = (e) => Boolean(eventTimeLabel(e.time)) && new Date(e.time).getTime() < now;
+    const isPast = (e) => !isUpcoming(e);
     const upcoming = todaysEvents.filter((e) => !isPast(e)).slice(0, SCHEDULE_CAP);
     const past = todaysEvents.filter(isPast);
     const fill = past.slice(Math.max(0, past.length - (SCHEDULE_CAP - upcoming.length)));
@@ -110,149 +108,185 @@ export function Today({ initial }) {
   }, [todaysEvents]);
 
   const traveling = location?.status === "traveling";
-  const answer = location
-    ? traveling
-      ? `President Trump is traveling to ${location.locationName}`
-      : `President Trump is at ${location.locationName}`
-    : "Locating the President";
+  // Headlines are facts that fit a headline cell, as on the UKHSA dashboard: where he is, what is next, and two counts
+  // that link to their feeds. The latest post and the latest order were tried as cells, but their only text is a full
+  // sentence or a 15-word title, which either overflowed the cell or was cut to nothing; both are the first items of
+  // the sections below.
+  const matteredToday = truth.filter(
+    (p) => (p.signal === "high" || p.signal === "medium") && p.timestamp && etDate(new Date(p.timestamp)) === todayKey(),
+  );
+  const monthAgo = etDate(new Date(Date.now() - 30 * 86400000));
+  const recentOrders = allNews.filter((n) => /executive order/i.test(n.category || "") && String(n.timestamp).slice(0, 10) >= monthAgo);
+  // After the day's last event, the headline shows the next one on a later day, or else the day's last event.
+  const laterEvent = useMemo(
+    () => [...schedule].filter((e) => eventTimeLabel(e.time) && isUpcoming(e)).sort((a, b) => a.time.localeCompare(b.time))[0] ?? null,
+    [schedule],
+  );
+  const lastEvent = [...todaysEvents].reverse().find((e) => eventTimeLabel(e.time) && !isUpcoming(e)) ?? null;
+  // Always "Next event": the next one with a known time, today or on a later day; when nothing more is scheduled,
+  // the cell says so and names the last event instead.
+  const eventCell = laterEvent
+    ? {
+        label: "Next event",
+        value: laterEvent.time.startsWith(todayKey()) ? `${govTime(laterEvent.time)} ET` : `${dateLabel(laterEvent.time).replace(/,.*/, "")}, ${govTime(laterEvent.time)}`,
+        note: <span className="line-clamp-2">{shortEvent(laterEvent.title)}</span>,
+      }
+    : {
+        label: "Next event",
+        value: "None today",
+        note: lastEvent ? <span className="line-clamp-2">Last: {govTime(lastEvent.time)}, {shortEvent(lastEvent.title)}</span> : "Nothing on the public schedule",
+      };
+  // Only events with a known time count as still ahead; a date-only entry may already have happened.
+  const remaining = todaysEvents.filter((e) => eventTimeLabel(e.time) && isUpcoming(e)).length;
+  const context = location
+    ? `President Trump is ${traveling ? "traveling to" : "at"} ${location.locationName}. ${
+        remaining ? `${remaining} more scheduled ${remaining === 1 ? "event" : "events"} today.` : "No more scheduled events today."
+      }`
+    : null;
 
   return (
-    <main>
-      {/* Top section: the "where + what's next" answer. The full location map
-          lives on /schedule; the text here already answers the question. */}
-      <div className="p-5 md:p-8 bg-white">
-        <div className="flex items-center gap-2 text-[13px]">
+    <main className="potus-today">
+      <div className="mb-8">
+        <p className="flex items-center gap-2 text-[14px] m-0 mb-2">
           <span className="inline-flex items-center gap-1.5 font-semibold" style={{ color: "var(--dk-green)" }}>
             <span className="dk-live-dot" aria-hidden="true" />
             Live
           </span>
-          <span className="dk-hint">
-            · Updated {timeLabel(location?.time)} ET, {dateLabel(location?.time)}
-          </span>
-        </div>
-        <h1 className="mt-2 font-bold leading-[1.1]" style={{ fontSize: "clamp(26px, 5vw, 40px)" }}>
-          {answer}
-        </h1>
-        {location?.city && !traveling && <p className="mt-2 text-[17px] text-[#505a5f]">{location.city}</p>}
-        {nextEvent && (
-          <p className="mt-4 text-[17px]">
-            <span className="font-semibold">Next:</span> {cleanEventTitle(nextEvent.title)}
-            {nextEvent.locationStr ? `, ${nextEvent.locationStr}` : ""}
-            {eventTimeLabel(nextEvent.time) && (
-              <span className="text-[#505a5f]"> · {eventTimeLabel(nextEvent.time)} ET</span>
-            )}
-          </p>
-        )}
+          {location?.time && (
+            <span className="dk-hint">
+              Updated {timeLabel(location.time)} ET, {dateLabel(location.time)}
+            </span>
+          )}
+        </p>
+        <h1 className="dk-h1">POTUS Tracker</h1>
+        {/* The live answer to "where is Trump today" sits right under the title, where the old sentence-style h1
+            put it, so the page still answers the query in its opening text. */}
+        <p className="text-[19px] text-[#505a5f] m-0">
+          {context ?? "Where President Trump is, his public schedule and what he posts, updated live."}
+        </p>
       </div>
 
-      {/* Row 1: Truth Social leads (most relevant, so it's the first section on
-          mobile and the left column on desktop); today's schedule follows. */}
-      <div className="grid md:grid-cols-2 border-t border-[#b1b4b6]">
-        <section className="bg-white border-b md:border-b-0 md:border-r border-[#e5e6e7]">
-          {/* The hint carries the AI disclosure once for the whole list. Every
-              item is a model-written summary, and a uniform property of the
-              list belongs in the header; repeating "AI summary" on each row was
-              noise that also made rows taller than the schedule beside them. */}
-          <Head
+      {/* Headlines, as the sibling sites open: where he is, what is next, and how much he has said and signed. The
+          location is the answer most readers come for, so it leads. */}
+      <KeyFigures
+        items={[
+          {
+            label: traveling ? "Traveling to" : "Current location",
+            value: location?.locationName ?? "Not yet known",
+            note: !traveling && location?.city ? location.city : undefined,
+          },
+          eventCell,
+          {
+            label: "Truth Social posts today",
+            value: (
+              <Link href="/truth" className="dk-link">
+                {matteredToday.length}
+              </Link>
+            ),
+            note: "High or medium impact",
+          },
+          {
+            label: "Executive orders, 30 days",
+            value: (
+              <Link href="/whitehouse" className="dk-link">
+                {recentOrders.length}
+              </Link>
+            ),
+            note: recentOrders[0] ? `Latest ${govDate(recentOrders[0].timestamp).replace(/ \d{4}$/, "")}` : "None in the past 30 days",
+          },
+        ]}
+      />
+
+      {/* Truth Social leads (most relevant, so it is the first section on mobile and the left column on desktop);
+          today's schedule follows. */}
+      <div className="grid md:grid-cols-2 gap-x-10">
+        <section className="dk-section">
+          {/* The description carries the AI disclosure once for the whole list: every item is a model-written
+              summary, so it belongs in the heading rather than on each row. */}
+          <SectionHeading
             title="Truth Social"
-            hint="AI summaries of high and medium impact posts"
-            href="/truth"
-            cta="All posts"
+            description="AI summaries of high and medium impact posts only."
+            right={<More href="/truth">All posts</More>}
           />
           {topSignal.length === 0 ? (
             <div className="dk-empty">No high or medium impact posts yet.</div>
           ) : (
-            <ul>
-              {topSignal.map((p) => (
-                <li key={p.id} className="p-4 md:px-6 border-b border-[#f0efed] last:border-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <ImpactBadge signal={p.signal} category={p.category} />
-                    <span className="dk-hint text-[12px]">
-                      · <RelativeTime iso={p.timestamp} />
-                    </span>
-                  </div>
-                  {/* Clamped so one long summary cannot unbalance the column;
-                      the post link below carries the full context. */}
-                  <p className="font-semibold leading-snug line-clamp-3">{p.why_it_matters}</p>
-                  {/* Own line, same position on every card. In the meta row the
-                      link only fit when badge + category + timestamp happened
-                      to be short, so it jumped between inline and wrapped from
-                      one card to the next.
-
-                      Internal on purpose: the card shows only the AI summary,
-                      and /truth?post= pins the full post text with its impact
-                      analysis and the Truth Social link, which serves "show me
-                      the post" better than sending the reader off-site cold. */}
-                  <Link
-                    href={`/truth?post=${encodeURIComponent(p.id)}`}
-                    className="dk-link text-[12px] mt-1 inline-block"
-                  >
-                    View post →
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            // The same DWP timeline as the Truth Social page. No impact tag: this panel only lists high and medium
+            // impact posts, as its description says, so a tag on every row would repeat it.
+            <div className="dwp-timeline dwp-timeline--compact">
+              <ol className="dwp-timeline__items">
+                {topSignal.map((p) => (
+                  <li key={p.id} className="dwp-timeline__item">
+                    <p className="dwp-timeline__datetime" suppressHydrationWarning>
+                      {govDateTime(p.timestamp)}
+                    </p>
+                    {/* Clamped so one long summary cannot unbalance the column; the post link carries the full text. */}
+                    <h3 className="dwp-timeline__heading line-clamp-3">{p.why_it_matters}</h3>
+                    <p className="dwp-timeline__by-line">Topic: {CATEGORY_LABEL[p.category] ?? "Other"}</p>
+                    {/* Internal on purpose: /truth?post= pins the full post with its impact analysis and the Truth
+                        Social link, which serves "show me the post" better than sending the reader off-site cold. */}
+                    <Link href={`/truth?post=${encodeURIComponent(p.id)}`} className="dwp-timeline__link">
+                      View post
+                      <span className="dk-visually-hidden"> from {govDateTime(p.timestamp)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
         </section>
 
-        <section className="bg-white border-b border-[#e5e6e7]">
-          <Head title="Today's schedule" hint="All times Eastern (ET)" href="/schedule" cta="Full schedule" />
+        <section className="dk-section">
+          <SectionHeading
+            title="Today's schedule"
+            description="All times Eastern (ET)."
+            right={<More href="/schedule">Full schedule</More>}
+          />
           {todaysEvents.length === 0 ? (
             <div className="dk-empty">No events scheduled today.</div>
           ) : (
             <>
-              <ul>
-                {scheduleView.events.map((e) => {
-                  const t = eventTimeLabel(e.time);
-                  return (
-                    <li key={e.id} className="flex gap-3 p-4 md:px-6 border-b border-[#f0efed] last:border-0">
-                      <span
-                        className={`text-[13px] font-semibold tabular-nums w-[68px] flex-shrink-0 ${
-                          t ? "text-[#1d70b8]" : "text-[#8a9196]"
-                        }`}
-                      >
-                        {t || "TBD"}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block">{cleanEventTitle(e.title)}</span>
-                        <span className="block dk-hint text-[13px]">{e.locationStr}</span>
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <ScheduleTimeline events={inDayOrder(scheduleView.events)} compact />
               {scheduleView.hidden > 0 && (
-                <div className="p-3 md:px-6 border-t border-[#f0efed]">
-                  <Link href="/schedule" className="dk-link text-[13px]">
-                    +{scheduleView.hidden} more events today · Full schedule →
+                <p className="mt-3 text-[14px]">
+                  <Link href="/schedule" className="dk-link">
+                    {scheduleView.hidden} more events today
                   </Link>
-                </div>
+                </p>
               )}
             </>
           )}
         </section>
       </div>
 
-      {/* Row 2: latest White House news, full width (three across on desktop) */}
-      <section className="bg-white border-t border-[#b1b4b6]">
-        <Head
+      {/* Latest White House news, three grey cards across on desktop. */}
+      <section className="dk-section">
+        <SectionHeading
           title="Latest from the White House"
-          hint="Official actions and releases"
-          href="/whitehouse"
-          cta="All news"
+          description="Official actions and releases, each summarized by AI."
+          right={<More href="/whitehouse">All news</More>}
         />
-        <ul className="grid md:grid-cols-3">
+        {/* GOV.UK's document list (the "gem-c-document-list" used on GOV.UK topic and organisation pages): a linked title,
+            a short description and a metadata line of type and date, one release under the next. It replaces three
+            grey cards, whose titles ran from one line to five and left the cards ragged or, aligned, full of gaps;
+            GOV.UK lists documents of uneven length this way rather than in a grid. */}
+        <ul className="doc-list">
           {news.map((n) => (
-            <li
-              key={n.id}
-              className="p-4 md:px-6 border-b md:border-b-0 border-[#f0efed] md:border-r md:border-[#e5e6e7] last:border-0 md:last:border-r-0"
-            >
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-[#505a5f]">{n.category}</div>
-              <div className="font-semibold leading-snug mt-1">{n.title}</div>
-              <div className="dk-hint text-[13px] mt-0.5">
-                <RelativeTime iso={n.timestamp} />
-              </div>
-              <p className="mt-1 text-[#505a5f] line-clamp-3 leading-relaxed text-[14px]">{n.summary}</p>
+            <li key={n.id} className="doc-list__item">
+              <h3 className="doc-list__title">
+                {n.link ? (
+                  <a href={n.link} target="_blank" rel="noreferrer" className="dk-link">
+                    {n.title}
+                    <span className="dk-visually-hidden"> (opens the official release)</span>
+                  </a>
+                ) : (
+                  n.title
+                )}
+              </h3>
+              <p className="doc-list__desc line-clamp-2">{n.summary}</p>
+              <p className="doc-list__meta">
+                {singular(n.category)} <span aria-hidden="true">·</span> {govDate(n.timestamp)}
+              </p>
             </li>
           ))}
         </ul>

@@ -81,7 +81,7 @@ export default function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body>
-        <div className="w-full min-h-[100dvh] flex flex-col bg-[#f3f2f1]">
+        <div className="w-full min-h-[100dvh] flex flex-col bg-white">
           <Navigation />
           <div className="w-full md:flex-1 flex flex-col">
             {/* w-full: .dk-container centres with `margin: 0 auto`, but as a
@@ -89,7 +89,7 @@ export default function RootLayout({
                 would otherwise shrink to content width (narrow pages like the
                 schedule collapsed to ~877px). width:100% pins it to the 960px
                 max on every page. */}
-            <div className="dk-container py-4 w-full">{children}</div>
+            <div className="dk-container w-full" style={{ paddingTop: 30, paddingBottom: 16 }}>{children}</div>
           </div>
           <SiteFooter current="potus" />
         </div>

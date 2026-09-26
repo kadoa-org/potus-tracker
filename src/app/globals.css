@@ -165,24 +165,70 @@ main {
   text-overflow: ellipsis;
 }
 
-/* ── Today dashboard: 3-class signal meter ─────────────────────────────────
-   Off bars are a light rule; on bars colour-code severity (red = high,
-   amber = medium, faint = low). Low stays grey on purpose: it means "noise",
-   and a colour would promote it. Amber is defined here because the shared kit
-   palette has no amber token and kit.css is synced from upstream. */
-.sig3 {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 14px;
-}
-.sig3 .sig-bar {
-  width: 4px;
-  background: var(--dk-rule);
-}
-.sig3 .sig-bar:nth-child(1) { height: 8px; }
-.sig3 .sig-bar:nth-child(2) { height: 11px; }
-.sig3 .sig-bar:nth-child(3) { height: 14px; }
-.sig-high .sig-bar.on { background: var(--dk-red); }
-.sig-medium .sig-bar.on { background: #e08600; }
-.sig-low .sig-bar.on { background: var(--dk-faint); }
+/* Dashboard lists: rows divided by hairlines on the page, no boxes, as the sibling sites list items. */
+.potus-list { border-top: 1px solid var(--dk-gov-border); }
+.potus-list > li { padding: 12px 0; border-bottom: 1px solid var(--dk-rule-soft); }
+
+/* GOV.UK Frontend v5 tag (sentence case, regular weight), used for impact in Impact.jsx. */
+.gov-tag { display: inline-block; padding: 2px 8px 3px; font-size: 16px; line-height: 1.25; font-weight: 400; white-space: nowrap; }
+.gov-tag--red { background: #f4cdc6; color: #2a0b06; }
+.gov-tag--orange { background: #fcd6c3; color: #6e3619; }
+.gov-tag--grey { background: #e5e6e7; color: #0b0c0c; }
+
+/* Feeds (Truth Social, White House): the DWP Design System timeline, copied 1:1 from design-system.dwp.gov.uk
+   (dwp-frontend): a 3px brand-blue rule, an 11px tick at each item and a cap under the last one; date and time,
+   heading, by-line, content and link in that order. Only the font is the site's own. */
+.dwp-timeline__items { margin: 0; padding: 0; list-style-type: none; border-left: 3px solid #1d70b8; }
+.dwp-timeline__item { position: relative; top: -8px; margin: 15px 0; padding: 0 0 15px 18px; }
+.dwp-timeline__item::before { content: ""; position: absolute; top: 8px; left: -1px; width: 11px; border-top: 3px solid #1d70b8; }
+.dwp-timeline__item:last-of-type::after { content: ""; position: absolute; bottom: -10px; left: -7px; width: 11px; border-top: 3px solid #1d70b8; }
+@media (max-width: 48.0525em) { .dwp-timeline__item { padding-top: 2px; } }
+.dwp-timeline__datetime { font-weight: 400; font-size: 1rem; line-height: 1.25; margin: 0 0 5px; }
+.dwp-timeline__heading { font-weight: 700; font-size: 1.1875rem; line-height: 1.3157894737; margin: 0 0 5px; }
+.dwp-timeline__by-line { font-weight: 400; font-size: 1rem; line-height: 1.25; margin: 0 0 15px; }
+.dwp-timeline__content { font-weight: 400; font-size: 1.1875rem; line-height: 1.3157894737; margin: 0 0 10px; }
+.dwp-timeline__link { font-weight: 400; font-size: 1.1875rem; line-height: 1.3157894737; color: var(--dk-link); text-decoration: underline; text-underline-offset: 0.1578em; }
+.text-button { appearance: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Truth Social items (TruthSocial.jsx): the post text, mentions and the link row under the timeline heading. */
+.post-text { font-size: 16px; line-height: 1.5; }
+
+
+/* GOV.UK secondary button, for expanding a long post: a button, so it reads as an action on the page rather than a
+   link that leaves it. */
+.gov-button-secondary { display: inline-block; margin: 10px 0 0; padding: 6px 10px 5px; border: 2px solid transparent; border-radius: 0; background: #f3f2f1; box-shadow: 0 2px 0 #929191; color: #0b0c0c; font: inherit; font-size: 16px; line-height: 1.1875; cursor: pointer; }
+.gov-button-secondary:hover { background: #dbdad9; }
+.gov-button-secondary:focus-visible { outline: 3px solid transparent; border-color: #fd0; background: #fd0; box-shadow: inset 0 0 0 1px #fd0, 0 2px 0 #0b0c0c; }
+.gov-button-secondary:active { top: 2px; box-shadow: none; }
+
+/* A timeline pulls its first item up 8px (DWP geometry), so it needs room under a section heading. */
+.dk-heading + .dwp-timeline { margin-top: 25px; }
+
+/* GOV.UK summary list, compact and without row borders (govuk-summary-list--no-border), for a post's properties. */
+/* 14px, a step below the 16px post text: the properties are metadata about the post, and at the same size and weight
+   they competed with it. 14px is the smallest size on the GOV.UK type scale; keys drop from bold to grey. */
+.gov-summary-list { display: table; width: 100%; table-layout: fixed; margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
+.gov-summary-list__row { display: table-row; }
+.gov-summary-list__key, .gov-summary-list__value { display: table-cell; padding: 3px 0; vertical-align: top; margin: 0; }
+.gov-summary-list__key { width: 85px; padding-right: 15px; font-weight: 400; color: var(--dk-gov-secondary); }
+.gov-summary-list__value { color: var(--dk-ink); overflow-wrap: anywhere; }
+.gov-summary-list__value .gov-tag { padding: 0 6px 1px; font-size: 14px; }
+
+/* GOV.UK document list (Today.jsx, latest White House releases): title link, description, then type and date, with a
+   rule between items. */
+.doc-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--dk-gov-border); }
+.doc-list__item { padding: 15px 0; border-bottom: 1px solid var(--dk-rule-soft); }
+.doc-list__title { margin: 0 0 5px; font-size: 19px; font-weight: 700; line-height: 1.3; }
+.doc-list__title .dk-link { color: var(--dk-link); text-decoration: underline; text-underline-offset: 0.15em; }
+.doc-list__desc { margin: 0 0 5px; font-size: 16px; line-height: 1.5; max-width: 75ch; }
+.doc-list__meta { margin: 0; font-size: 14px; color: var(--dk-gov-secondary); }
+
+/* Compact timeline for the dashboard's half-width columns. The DWP sizes (19px bold headings) are set for a
+   full-width page; in a column, every AI summary turned into three lines of heavy bold. One step down the GOV.UK
+   scale: 16px bold headings, 14px grey date and by-line, and less space between items. */
+.dwp-timeline--compact .dwp-timeline__item { margin: 10px 0; padding-bottom: 10px; }
+.dwp-timeline--compact .dwp-timeline__datetime { font-size: 14px; color: var(--dk-gov-secondary); margin-bottom: 3px; }
+.dwp-timeline--compact .dwp-timeline__heading { font-size: 16px; line-height: 1.35; margin-bottom: 3px; }
+.dwp-timeline--compact .dwp-timeline__by-line { font-size: 14px; color: var(--dk-gov-secondary); margin: 0 0 4px; }
+.dwp-timeline--compact .dwp-timeline__link { font-size: 14px; }
+

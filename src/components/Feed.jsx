@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Tag } from "../kit";
 import { apiUrl } from "../lib/basePath";
+import { govDate } from "../lib/feed";
 import { FetchStatus } from "./FetchStatus.jsx";
-import { RelativeTime } from "./RelativeTime.jsx";
 
 const getSourceName = (item) => {
   if (item.source && item.source !== "Unknown") return item.source;
@@ -18,51 +17,42 @@ const getSourceName = (item) => {
   return "Unknown";
 };
 
-const SourceLink = ({ item }) => {
-  const sourceName = getSourceName(item);
-  return item.link ? (
-    <a href={item.link} target="_blank" rel="noreferrer" className="dk-link">
-      {sourceName}
-    </a>
-  ) : (
-    sourceName
-  );
+// White House categories arrive plural ("Executive Orders"); one release reads as one.
+const singular = (c) => {
+  const raw = c || "News";
+  // Only a one-kind category is made singular; "Nominations & Appointments" stays as it is.
+  const one = raw.includes("&") ? raw : raw.replace(/ies$/, "y").replace(/s$/, "");
+  // Sentence case, as GOV.UK writes labels: "Executive order".
+  return one.charAt(0).toUpperCase() + one.slice(1).toLowerCase();
 };
 
+const External = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+  </svg>
+);
+
+// One release as a DWP timeline item: the date, the title, what kind of action it is, our AI summary, and the
+// link to the original so a reader can verify it. Releases carry a date only, so there is no time.
 const FeedItem = ({ item }) => (
-  <div className="grid auto-rows-min gap-1 p-4 md:px-6 bg-white">
-    <div className="flex flex-col md:flex-row md:items-baseline gap-1 justify-between">
-      <div className="font-semibold leading-snug">{item.title}</div>
-      <span className="whitespace-nowrap">
-        <Tag>{item.category || "News"}</Tag>
-      </span>
-    </div>
-    <div className="dk-hint flex items-center gap-1">
-      <SourceLink item={item} /> &middot; <RelativeTime iso={item.timestamp} />
-    </div>
-    <div className="mt-1 line-clamp-6 leading-relaxed">{item.summary}</div>
-    {/* Make it unambiguous the body is our AI summary, and link straight to the
-        original release so readers can verify the source. */}
-    <div className="mt-2 flex items-center gap-1.5 text-[13px]">
-      <span className="dk-hint italic">AI summary</span>
-      {item.link && (
-        <>
-          <span className="dk-hint">&middot;</span>
-          <a href={item.link} target="_blank" rel="noreferrer" className="dk-link inline-flex items-center gap-1">
-            Read full article
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
-          </a>
-        </>
-      )}
-    </div>
-  </div>
+  <li className="dwp-timeline__item">
+    <p className="dwp-timeline__datetime">{govDate(item.timestamp)}</p>
+    <h2 className="dwp-timeline__heading">{item.title}</h2>
+    <p className="dwp-timeline__by-line">
+      {singular(item.category)} from {getSourceName(item)}
+    </p>
+    <p className="dwp-timeline__content line-clamp-4">
+      <span className="dk-visually-hidden">AI summary: </span>
+      {item.summary}
+    </p>
+    {item.link && (
+      <a href={item.link} target="_blank" rel="noreferrer" className="dwp-timeline__link inline-flex items-center gap-1">
+        Read the full release
+        <span className="dk-visually-hidden"> of {item.title}</span>
+        <External />
+      </a>
+    )}
+  </li>
 );
 
 const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
@@ -74,7 +64,7 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
   };
 
   return (
-    <div className="p-3 bg-white flex items-center justify-center gap-3">
+    <div className="py-5 flex items-center justify-center gap-3 border-t border-[#b1b4b6]">
       <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="dk-btn">
         Previous
       </button>
@@ -140,24 +130,23 @@ export function Feed({ initial }) {
 
   return (
     <main>
-      <div className="dk-section-head p-4 mb-0!">
-        <div>
-          <h1 className="font-bold text-[17px] leading-[1.3] text-[#0b0c0c] m-0">White House News Today</h1>
-          <p className="dk-hint text-[13px] mt-0.5">
-            Concise AI summaries of official releases. Each links to the full article.
-          </p>
-        </div>
+      <div className="mb-8">
+        <h1 className="dk-h1">White House News Today</h1>
+        <p className="text-[19px] text-[#505a5f] m-0">Official releases, newest first. Each summary is written by AI and links to the full release.</p>
       </div>
-      <hr />
-      <div id="feedContent" className="scrollarea">
+      <div id="feedContent">
         {data.length === 0 ? (
-          <div className="dk-empty bg-white">No news articles found</div>
+          <div className="dk-empty">No news articles found</div>
         ) : (
-          data.map((item) => <FeedItem key={item.id} item={item} />)
+          <div className="dwp-timeline">
+            <ol className="dwp-timeline__items">
+              {data.map((item) => (
+                <FeedItem key={item.id} item={item} />
+              ))}
+            </ol>
+          </div>
         )}
-        <div className="flex-1 bg-white"></div>
       </div>
-      <hr />
       <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
     </main>
   );

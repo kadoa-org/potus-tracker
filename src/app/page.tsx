@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Today } from "@/components/Today";
-import { cleanEventTitle } from "@/lib/schedule";
+import { cleanEventTitle, eventTimeLabel, isUpcoming } from "@/lib/schedule";
 
 // The "Today" dashboard is the front door: one page answering "where is the
 // president / what's on today" with the schedule, Truth Social signal, location,
@@ -44,10 +44,17 @@ async function getData() {
     // Filtered server-side to the posts the panel actually shows. Fetching the
     // newest 20 unfiltered and dropping "low" on the client left the panel
     // empty whenever a run of reposts filled the window.
-    j("/feed?type=truth_social&signal=high,medium&limit=5", { data: [] }),
-    j("/feed?type=news&limit=3", { data: [] }),
+    // Thirty, so the headline can count today's high and medium impact posts; the panel shows five.
+    j("/feed?type=truth_social&signal=high,medium&limit=30", { data: [] }),
+    // Fifty releases, enough to count the executive orders of the past 30 days for the headline; three are shown.
+    j("/feed?type=news&limit=50", { data: [] }),
   ]);
-  return { location: loc.data, schedule: sch.data ?? [], truth: tru.data ?? [], news: nws.data ?? [] };
+  return {
+    location: loc.data,
+    schedule: sch.data ?? [],
+    truth: tru.data ?? [],
+    news: nws.data ?? [],
+  };
 }
 
 // FAQ schema targeting the highest-intent queries ("where is trump right now",
@@ -62,10 +69,10 @@ function buildFaq(location: Loc, schedule: SchedEvent[]) {
     ? `President Trump is at ${location.locationName}.`
     : "President Trump's current location is updated live from his official public schedule.";
 
-  const now = Date.now();
+  // Same rule as the dashboard headline: only an event with a known time can be "next".
   const next = [...schedule]
-    .filter((e) => e.time && new Date(e.time).getTime() >= now)
-    .sort((a, b) => new Date(a.time as string).getTime() - new Date(b.time as string).getTime())[0];
+    .filter((e) => eventTimeLabel(e.time) && isUpcoming(e))
+    .sort((a, b) => (a.time as string).localeCompare(b.time as string))[0];
   const scheduleAnswer = next
     ? `Next up: ${cleanEventTitle(next.title)}${next.locationStr ? ` at ${next.locationStr}` : ""}. See the full public schedule for today, updated live.`
     : "See President Trump's full daily public schedule, updated live from official sources.";
