@@ -1,6 +1,7 @@
 "use client";
 
 import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from "d3-geo";
+import { RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import world from "world-atlas/land-110m.json";
@@ -18,6 +19,7 @@ const SECONDARY = "#505a5f";
 const OWNED = new Set(["washington", "maralago", "bedminster", "property"]);
 const SPIN = 0.06; // degrees per frame
 const RESUME_MS = 6000;
+const CONTROL = "flex h-[30px] w-[30px] items-center justify-center text-[18px] leading-none text-[#0b0c0c] hover:bg-[#f3f2f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#ffdd00]";
 const NOW_RED = "#d4351c";
 const RECENT_BLUE = "#1d70b8";
 const RECENT_DAYS = 7;
@@ -361,16 +363,21 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
   return (
     <div ref={wrap} className="relative flex flex-col items-center">
       {selected && <PlaceCard place={places[selected.id]} x={selected.x} y={selected.y} offset={wrap.current} canvas={canvas.current} onClose={() => setSelected(null)} />}
-      <canvas
-        ref={canvas}
-        role="img"
-        aria-label="Globe with every flight the president took in the past year and glows where he slept"
-        className="cursor-grab touch-pan-y active:cursor-grabbing"
-      />
-      <div ref={controls} className="mt-2 flex items-center gap-2">
-        <button type="button" className="dk-btn" aria-label="Zoom in">+</button>
-        <button type="button" className="dk-btn" aria-label="Zoom out">−</button>
-        <button type="button" className="dk-btn">Reset</button>
+      <div className="relative">
+        <canvas
+          ref={canvas}
+          role="img"
+          aria-label="Globe with the president's flights and the places he slept"
+          className="block cursor-grab touch-pan-y active:cursor-grabbing"
+        />
+        {/* Zoom controls stacked at the top left, where web maps put them. */}
+        <div ref={controls} className="absolute left-3 top-3 flex flex-col border border-[#b1b4b6] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+          <button type="button" aria-label="Zoom in" className={CONTROL}>+</button>
+          <button type="button" aria-label="Zoom out" className={`${CONTROL} border-t border-[#b1b4b6]`}>−</button>
+          <button type="button" aria-label="Reset view" title="Reset view" className={`${CONTROL} border-t border-[#b1b4b6]`}>
+            <RotateCcw size={14} aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </div>
   );

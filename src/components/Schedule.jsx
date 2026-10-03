@@ -2,7 +2,6 @@
 
 import { addDays, format, isToday, isTomorrow, isYesterday, parseISO, startOfDay } from "date-fns";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
 import { hasMapCoordinates } from "../lib/location";
@@ -12,10 +11,9 @@ import { FetchStatus } from "./FetchStatus.jsx";
 import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
 
 // The same globe as the Travel page, zoomed in on where he is now with the last two weeks of flights.
-const TravelGlobe = dynamic(() => import("./TravelGlobe").then((mod) => mod.TravelGlobe), {
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full dk-hint">Loading map...</div>,
-});
+const loadGlobe = () => import("./TravelGlobe").then((mod) => mod.TravelGlobe);
+const MapSkeleton = () => <div className="h-[420px] w-full animate-pulse bg-[#e5e6e7]" aria-label="Loading map" />;
+const TravelGlobe = dynamic(loadGlobe, { ssr: false, loading: MapSkeleton });
 
 // Deterministic day label from the date STRING (fixed UTC parse) so the server
 // and client first render match. "Today/Tomorrow/Yesterday" is relative to now,
@@ -54,6 +52,7 @@ const DayGroup = ({ date, events }) => {
 export function Schedule({ initial }) {
   const [location, setLocation] = useState(null);
   const [recent, setRecent] = useState(null);
+  const [recentDone, setRecentDone] = useState(false);
   const [schedule, setSchedule] = useState(initial ?? null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [scheduleLoading, setScheduleLoading] = useState(!initial);
@@ -96,6 +95,9 @@ export function Schedule({ initial }) {
       }
     };
 
+    // Start downloading the globe code now, alongside the data requests, rather than after the location arrives.
+    loadGlobe();
+
     // The last two weeks of flights for the globe; the card still renders without them.
     const fetchRecent = async () => {
       try {
@@ -103,6 +105,8 @@ export function Schedule({ initial }) {
         if (response.ok) setRecent((await response.json()).data);
       } catch {
         setRecent(null);
+      } finally {
+        setRecentDone(true);
       }
     };
 
@@ -176,9 +180,15 @@ export function Schedule({ initial }) {
         <p className="text-[19px] text-[#505a5f] m-0">His public schedule and latest known location, updated live.</p>
       </div>
 
-      {locationLoading && <FetchStatus loading={true} />}
+      {locationLoading && !location && (
+        <section className="dk-card" aria-busy="true">
+          <div className="mb-2 h-[26px] w-[340px] max-w-full animate-pulse bg-[#e5e6e7]" />
+          <div className="mb-5 h-[18px] w-[220px] animate-pulse bg-[#e5e6e7]" />
+          <MapSkeleton />
+        </section>
+      )}
       {locationError && <FetchStatus error={locationError} />}
-      {!locationLoading && !locationError && location && (
+      {!locationError && location && (
         <>
           {/* One card answers "where is he": the place in the title, when it was last updated, then the map. A
               separate headline row repeated the same two facts. */}
@@ -190,22 +200,13 @@ export function Schedule({ initial }) {
             />
             {canShowMap && (
               <div className="dk-card__panel relative" style={{ padding: 0 }}>
-                <TravelGlobe
-                  places={recent?.places ?? []}
-                  flights={recent?.flights ?? []}
-                  to={recent?.to}
-                  now={now}
-                  compact
-                  startZoom={3}
-                />
+                {recentDone ? (
+                  <TravelGlobe places={recent?.places ?? []} flights={recent?.flights ?? []} to={recent?.to} now={now} compact startZoom={3} />
+                ) : (
+                  <MapSkeleton />
+                )}
               </div>
             )}
-            <p className="dk-hint mt-3">
-              Blue lines are his flights in the last 7 days; older ones fade.{" "}
-              <Link href="/travel" className="dk-link">
-                Where he traveled in the past year
-              </Link>
-            </p>
           </section>
         </>
       )}
