@@ -4,6 +4,7 @@ import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from "d3-geo";
 import { useEffect, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import world from "world-atlas/land-110m.json";
+import { km } from "@/lib/travel";
 import { COLORS } from "@/lib/travelColors";
 
 // A globe the reader can rotate: every flight as a great-circle line, a glow at each place he slept (area proportional
@@ -17,6 +18,10 @@ const SECONDARY = "#505a5f";
 const OWNED = new Set(["washington", "maralago", "bedminster", "property"]);
 const SPIN = 0.06; // degrees per frame
 const RESUME_MS = 6000;
+const NOW_RED = "#d4351c";
+const RECENT_BLUE = "#1d70b8";
+const RECENT_DAYS = 7;
+const ageDays = (date, to) => (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${date}T12:00:00Z`)) / 864e5;
 
 const legStyle = (a, b) =>
   a.category === "maralago" || b.category === "maralago"
@@ -25,7 +30,9 @@ const legStyle = (a, b) =>
       ? [COLORS.bedminster.cell, 0.6, 1.6]
       : [INK, 0.22, 1.1];
 
-export function TravelGlobe({ places, flights }) {
+// `now` adds a pulsing marker at the current location and centres the globe there. Flights fade with age and the
+// last week's are drawn in blue. `compact` is the wide, shorter version on the Schedule page: no spin, starts zoomed.
+export function TravelGlobe({ places, flights, to, now = null, compact = false, startZoom = 1 }) {
   const wrap = useRef(null);
   const canvas = useRef(null);
   const controls = useRef(null);
@@ -38,33 +45,48 @@ export function TravelGlobe({ places, flights }) {
     const ctx = el.getContext("2d");
     const font = getComputedStyle(document.body).fontFamily;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const rotation = [77, -28, 0]; // starts over the eastern US
+    const start = now ? [-now.lon, -Math.max(-60, Math.min(60, now.lat)), 0] : [77, -28, 0]; // otherwise the eastern US
+    const rotation = [...start];
     const projection = geoOrthographic().clipAngle(90).precision(0.3);
     const path = geoPath(projection, ctx);
     const slept = places.filter((p) => p.nights > 0).sort((a, b) => b.nights - a.nights);
     const seen = places.filter((p) => p.nights > 0 || p.visits > 0);
-    const legs = flights.map((f) => [places[f.from], places[f.to]]).sort(([a, b], [c, d]) => legStyle(a, b)[1] - legStyle(c, d)[1]);
-    const labelled = [
-      ...slept.filter((p) => OWNED.has(p.category)),
-      ...slept.filter((p) => !OWNED.has(p.category) && (p.category === "abroad" || p.nights >= 2)),
-    ];
-    let size = 0;
+    const legs = flights
+      .map((f) => {
+        const a = places[f.from], b = places[f.to];
+        const age = to && f.date ? ageDays(f.date, to) : 0;
+        const recent = to && age < RECENT_DAYS;
+        const [color, opacity, width] = recent ? [RECENT_BLUE, 0.95, 2.4] : legStyle(a, b);
+        // Older flights fade towards a third of their strength over the year.
+        const fade = recent ? 1 : 0.35 + 0.65 * Math.max(0, 1 - age / 365);
+        return { a, b, color, opacity: opacity * fade, width, recent };
+      })
+      .sort((x, y) => Number(x.recent) - Number(y.recent) || x.opacity - y.opacity);
+    // The compact globe covers two weeks, so every place he went gets a label; the full year labels the main ones.
+    const labelled = (
+      compact
+        ? seen
+        : [...slept.filter((p) => OWNED.has(p.category)), ...slept.filter((p) => !OWNED.has(p.category) && (p.category === "abroad" || p.nights >= 2))]
+    ).filter((p) => !now || km(p, now) > 80); // the Now label names the current place
+    let width = 0;
+    let height = 0;
     let radius = 0;
     let frame = 0;
     let lastInteraction = -Infinity;
-    let zoom = 1;
+    let zoom = startZoom;
 
     const resize = () => {
       const w = wrap.current.clientWidth;
-      size = Math.min(w, 760);
+      width = compact ? w : Math.min(w, 760);
+      height = compact ? 420 : width;
       const dpr = window.devicePixelRatio || 1;
-      el.width = size * dpr;
-      el.height = size * dpr;
-      el.style.width = `${size}px`;
-      el.style.height = `${size}px`;
+      el.width = width * dpr;
+      el.height = height * dpr;
+      el.style.width = `${width}px`;
+      el.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      radius = size / 2 - 6;
-      projection.translate([size / 2, size / 2]);
+      radius = Math.min(width, height) / 2 - 6;
+      projection.translate([width / 2, height / 2]);
       draw();
     };
 
@@ -72,7 +94,7 @@ export function TravelGlobe({ places, flights }) {
 
     function draw() {
       projection.rotate(rotation).scale(radius * zoom);
-      ctx.clearRect(0, 0, size, size);
+      ctx.clearRect(0, 0, width, height);
       ctx.beginPath();
       path(sphere);
       ctx.fillStyle = "#f8f8f8";
@@ -105,15 +127,23 @@ export function TravelGlobe({ places, flights }) {
         ctx.arc(x, y, r, 0, 2 * Math.PI);
         ctx.fill();
       }
-      for (const [a, b] of legs) {
-        const [color, opacity, width] = legStyle(a, b);
+      for (const leg of legs) {
+        if (leg.recent) continue;
         ctx.beginPath();
-        path({ type: "LineString", coordinates: [[a.lon, a.lat], [b.lon, b.lat]] });
-        ctx.strokeStyle = hexA(color, opacity);
-        ctx.lineWidth = width;
+        path({ type: "LineString", coordinates: [[leg.a.lon, leg.a.lat], [leg.b.lon, leg.b.lat]] });
+        ctx.strokeStyle = hexA(leg.color, leg.opacity);
+        ctx.lineWidth = leg.width;
         ctx.stroke();
       }
       ctx.globalCompositeOperation = "source-over";
+      for (const leg of legs) {
+        if (!leg.recent) continue;
+        ctx.beginPath();
+        path({ type: "LineString", coordinates: [[leg.a.lon, leg.a.lat], [leg.b.lon, leg.b.lat]] });
+        ctx.strokeStyle = hexA(leg.color, leg.opacity);
+        ctx.lineWidth = leg.width;
+        ctx.stroke();
+      }
       ctx.fillStyle = INK;
       for (const p of seen) {
         if (!visible(p)) continue;
@@ -122,6 +152,7 @@ export function TravelGlobe({ places, flights }) {
         ctx.arc(x, y, 1.8, 0, 2 * Math.PI);
         ctx.fill();
       }
+      drawNow();
       drawLabels();
       ctx.beginPath();
       path(sphere);
@@ -130,10 +161,46 @@ export function TravelGlobe({ places, flights }) {
       ctx.stroke();
     }
 
+    // A red dot with a ring that pulses outwards every 1.6 s (static for reduced motion).
+    function drawNow() {
+      if (!now || !visible(now)) return;
+      const [x, y] = projection([now.lon, now.lat]);
+      const t = reduceMotion ? 0.35 : (performance.now() % 1600) / 1600;
+      ctx.beginPath();
+      ctx.arc(x, y, 6 + t * 16, 0, 2 * Math.PI);
+      ctx.strokeStyle = hexA(NOW_RED, 0.6 * (1 - t));
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, 5.5, 0, 2 * Math.PI);
+      ctx.fillStyle = NOW_RED;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
     // Greedy placement: right of the dot, then left; a label that would overlap an earlier one is skipped.
     function drawLabels() {
       const boxes = [];
       ctx.lineJoin = "round";
+      if (now && visible(now)) {
+        const [x, y] = projection([now.lon, now.lat]);
+        ctx.font = `700 14px ${font}`;
+        const text = `Now: ${now.label}`;
+        const w = ctx.measureText(text).width;
+        const left = x - w / 2;
+        const top = y - 34;
+        boxes.push({ x: left - 4, y: top - 9, w: w + 8, h: 18 });
+        // The current place keeps its own label below, so it is not drawn twice.
+        boxes.push({ x: x - 4, y: y - 8, w: 8, h: 16 });
+        ctx.textBaseline = "middle";
+        ctx.strokeStyle = "rgba(248,248,248,0.95)";
+        ctx.lineWidth = 3.5;
+        ctx.strokeText(text, left, top);
+        ctx.fillStyle = NOW_RED;
+        ctx.fillText(text, left, top);
+      }
       for (const p of labelled) {
         if (!visible(p)) continue;
         const [x, y] = projection([p.lon, p.lat]);
@@ -168,9 +235,11 @@ export function TravelGlobe({ places, flights }) {
       }
     }
 
-    const tick = (now) => {
-      if (!reduceMotion && zoom === 1 && !selectedRef.current && now - lastInteraction > RESUME_MS) {
+    const tick = (t) => {
+      if (!compact && !reduceMotion && zoom === 1 && !selectedRef.current && t - lastInteraction > RESUME_MS) {
         rotation[0] = (rotation[0] + SPIN) % 360;
+        draw();
+      } else if (now && !reduceMotion && visible(now)) {
         draw();
       }
       frame = requestAnimationFrame(tick);
@@ -257,8 +326,8 @@ export function TravelGlobe({ places, flights }) {
     const zoomIn = () => setZoom(zoom * 1.6);
     const zoomOut = () => setZoom(zoom / 1.6);
     const reset = () => {
-      rotation.splice(0, 3, 77, -28, 0);
-      setZoom(1);
+      rotation.splice(0, 3, ...start);
+      setZoom(startZoom);
     };
     const [inBtn, outBtn, resetBtn] = controls.current.querySelectorAll("button");
     inBtn.addEventListener("click", zoomIn);
@@ -287,7 +356,7 @@ export function TravelGlobe({ places, flights }) {
       outBtn.removeEventListener("click", zoomOut);
       resetBtn.removeEventListener("click", reset);
     };
-  }, [places, flights]);
+  }, [places, flights, to, now, compact, startZoom]);
 
   return (
     <div ref={wrap} className="relative flex flex-col items-center">

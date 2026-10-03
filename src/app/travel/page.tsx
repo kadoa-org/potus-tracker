@@ -4,7 +4,7 @@ import { TravelGlobe } from "@/components/TravelGlobe";
 import { DataTable, Section } from "@/kit";
 import { CATEGORIES, nightsByCategory, placeHistory } from "@/lib/travel";
 import { COLORS } from "@/lib/travelColors";
-import { loadTravel } from "@/lib/travelData";
+import { globeData, loadCurrentLocation, loadTravel } from "@/lib/travelData";
 
 // Rebuilt from the schedule every six hours; the map covers the last 365 complete nights.
 export const revalidate = 21600;
@@ -26,7 +26,7 @@ const formatDate = (date: string) =>
   new Date(`${date}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 export default async function TravelPage() {
-  const travel = await loadTravel();
+  const [travel, now] = await Promise.all([loadTravel(), loadCurrentLocation().catch(() => null)]);
   const byCategory = nightsByCategory(travel);
   const history = placeHistory(travel);
   const total = travel.calendar.length;
@@ -43,10 +43,7 @@ export default async function TravelPage() {
       </div>
 
       <div className="mx-auto mb-10 max-w-[760px]">
-        <TravelGlobe
-          places={travel.places.map(({ id, lat, lon, label, name, category, nights, visits }, i) => ({ id, lat, lon, label, name, category, nights, visits, ...history[i] }))}
-          flights={travel.flights.map(({ from, to }) => ({ from, to }))}
-        />
+        <TravelGlobe {...globeData(travel, history)} now={now} />
       </div>
 
       <Section title="Where he slept each night" description="One square per night, one column per week. Hover a square for the date and place.">

@@ -2,7 +2,8 @@
 
 import { addDays, format, isToday, isTomorrow, isYesterday, parseISO, startOfDay } from "date-fns";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
 import { hasMapCoordinates } from "../lib/location";
 import { eventTimeLabel, inDayOrder } from "../lib/schedule";
@@ -10,8 +11,8 @@ import { SectionHeading } from "../kit";
 import { FetchStatus } from "./FetchStatus.jsx";
 import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
 
-// Dynamically import the LeafletMap component with no SSR
-const LeafletMap = dynamic(() => import("./LeafletMap").then((mod) => mod.LeafletMap), {
+// The same globe as the Travel page, zoomed in on where he is now with the last two weeks of flights.
+const TravelGlobe = dynamic(() => import("./TravelGlobe").then((mod) => mod.TravelGlobe), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full dk-hint">Loading map...</div>,
 });
@@ -52,6 +53,7 @@ const DayGroup = ({ date, events }) => {
 
 export function Schedule({ initial }) {
   const [location, setLocation] = useState(null);
+  const [recent, setRecent] = useState(null);
   const [schedule, setSchedule] = useState(initial ?? null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [scheduleLoading, setScheduleLoading] = useState(!initial);
@@ -94,7 +96,18 @@ export function Schedule({ initial }) {
       }
     };
 
+    // The last two weeks of flights for the globe; the card still renders without them.
+    const fetchRecent = async () => {
+      try {
+        const response = await fetch(apiUrl("/api/travel/recent"));
+        if (response.ok) setRecent((await response.json()).data);
+      } catch {
+        setRecent(null);
+      }
+    };
+
     fetchLocation();
+    fetchRecent();
     // Skip the redundant schedule refetch on mount when the server already sent it.
     if (skipInitialSchedule.current) {
       skipInitialSchedule.current = false;
@@ -103,7 +116,10 @@ export function Schedule({ initial }) {
     }
 
     // Refresh location every 5 minutes
-    const interval = setInterval(fetchLocation, 5 * 60 * 1000);
+    const interval = setInterval(() => {
+      fetchLocation();
+      fetchRecent();
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -141,6 +157,10 @@ export function Schedule({ initial }) {
 
   const groupedData = schedule ? groupEventsByDay(schedule) : {};
   const canShowMap = hasMapCoordinates(location);
+  const now = useMemo(
+    () => (canShowMap ? { lat: location.lat, lon: location.lon, label: location.locationName || "Unknown" } : null),
+    [canShowMap, location?.lat, location?.lon, location?.locationName],
+  );
 
   // "Sep 26, 2026 at 12:00 PM" from the stored Eastern wall-clock time, which carries a +00:00 offset.
   const updatedLabel = (() => {
@@ -169,10 +189,23 @@ export function Schedule({ initial }) {
               date={updatedLabel ? `Updated ${updatedLabel}` : undefined}
             />
             {canShowMap && (
-              <div className="dk-card__panel h-[400px] relative overflow-hidden" style={{ padding: 0 }}>
-                <LeafletMap location={location} />
+              <div className="dk-card__panel relative" style={{ padding: 0 }}>
+                <TravelGlobe
+                  places={recent?.places ?? []}
+                  flights={recent?.flights ?? []}
+                  to={recent?.to}
+                  now={now}
+                  compact
+                  startZoom={3}
+                />
               </div>
             )}
+            <p className="dk-hint mt-3">
+              Blue lines are his flights in the last 7 days; older ones fade.{" "}
+              <Link href="/travel" className="dk-link">
+                Where he traveled in the past year
+              </Link>
+            </p>
           </section>
         </>
       )}
