@@ -88,7 +88,7 @@ for (const a of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") for (const b of "ABCDEFGHIJKLMNOPQ
 // Common English names that differ from the CLDR region names.
 for (const name of ["Turkey", "Czech Republic", "UK", "England", "Scotland", "Wales", "USA", "Holland", "Vatican"]) COUNTRIES.add(name);
 const isRegion = (s) => US_STATES.has(s) || COUNTRIES.has(s);
-const VENUE_WORDS = /\b(Four Seasons Hotel|InterContinental|Hilton|Hotel|Resort|Convention Cent(re|er)|Congress Cent(re|er)|Presidential Compound|US Fleet Activities|Palace|The)\b/gi;
+const VENUE_WORDS = /\b(Four Seasons Hotel|InterContinental|Hilton|Arts Cent(re|er)|Hotel|Resort|Convention Cent(re|er)|Congress Cent(re|er)|Presidential Compound|US Fleet Activities|Palace|The)\b/gi;
 const PLACE_SUFFIX = /\s*\b((International|Regional|Municipal)\s+)?(Airport|Air Force Base|Air Base|Air Reserve Base|Air National Guard Base)\b.*$/i;
 const clean = (s) => s.replace(PLACE_SUFFIX, "").replace(VENUE_WORDS, "").replace(/\s+/g, " ").trim();
 // A short place label from a schedule location ("Bestepe Presidential Compound, Ankara, Turkey" is "Ankara"): known

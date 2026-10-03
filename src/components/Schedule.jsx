@@ -210,7 +210,7 @@ export function Schedule({ initial }) {
             )}
             <p className="dk-card__footer text-right">
               <Link href="/travel" className="dk-link">
-                Past year of travel
+                Travel history
               </Link>
             </p>
           </section>

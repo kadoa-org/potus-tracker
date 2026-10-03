@@ -17,8 +17,6 @@ const sphere = { type: "Sphere" };
 const INK = "#0b0c0c";
 const SECONDARY = "#505a5f";
 const OWNED = new Set(["washington", "maralago", "bedminster", "property"]);
-const SPIN = 0.06; // degrees per frame
-const RESUME_MS = 6000;
 const CONTROL = "flex h-[30px] w-[30px] items-center justify-center text-[18px] leading-none text-[#0b0c0c] hover:bg-[#f3f2f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#ffdd00]";
 const NOW_RED = "#d4351c";
 const RECENT_BLUE = "#1d70b8";
@@ -74,7 +72,6 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
     let height = 0;
     let radius = 0;
     let frame = 0;
-    let lastInteraction = -Infinity;
     let zoom = startZoom;
 
     const resize = () => {
@@ -237,11 +234,9 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
       }
     }
 
-    const tick = (t) => {
-      if (!compact && !reduceMotion && zoom === 1 && !selectedRef.current && t - lastInteraction > RESUME_MS) {
-        rotation[0] = (rotation[0] + SPIN) % 360;
-        draw();
-      } else if (now && !reduceMotion && visible(now)) {
+    const tick = () => {
+      // The globe holds still; only the Now marker's pulse needs frames.
+      if (now && !reduceMotion && visible(now)) {
         draw();
       }
       frame = requestAnimationFrame(tick);
@@ -272,7 +267,6 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
     const down = (e) => {
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       el.setPointerCapture(e.pointerId);
-      lastInteraction = performance.now();
       if (pointers.size === 2) {
         pinch = { d: spread(), z: zoom };
         drag = null;
@@ -298,7 +292,6 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
       const scale = 180 / (Math.PI * radius * zoom);
       rotation[0] = drag.r[0] + (e.clientX - drag.x) * scale;
       rotation[1] = Math.max(-90, Math.min(90, drag.r[1] - (e.clientY - drag.y) * scale));
-      lastInteraction = performance.now();
       draw();
     };
     const up = (e) => {
@@ -309,7 +302,6 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         setSelected(h ? { id: h.p.id, x: h.x, y: h.y } : null);
       }
       drag = null;
-      lastInteraction = performance.now();
     };
 
     // Zoom by ctrl or cmd plus scroll (also a trackpad pinch), buttons or double-click. A plain scroll stays with the
@@ -317,12 +309,11 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
     const wheel = (e) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      setZoom(zoom * Math.exp(-e.deltaY * 0.01));
+      setZoom(zoom * Math.exp(-e.deltaY * 0.0025));
     };
     function setZoom(z) {
       zoom = Math.max(1, Math.min(8, z));
       setSelected(null);
-      lastInteraction = performance.now();
       draw();
     }
     const zoomIn = () => setZoom(zoom * 1.6);
