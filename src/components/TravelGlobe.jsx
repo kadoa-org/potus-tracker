@@ -1,7 +1,7 @@
 "use client";
 
 import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from "d3-geo";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import world from "world-atlas/land-110m.json";
 import { COLORS } from "@/lib/travelColors";
@@ -29,6 +29,9 @@ export function TravelGlobe({ places, flights }) {
   const wrap = useRef(null);
   const canvas = useRef(null);
   const controls = useRef(null);
+  const [selected, setSelected] = useState(null);
+  const selectedRef = useRef(null);
+  selectedRef.current = selected;
 
   useEffect(() => {
     const el = canvas.current;
@@ -166,28 +169,54 @@ export function TravelGlobe({ places, flights }) {
     }
 
     const tick = (now) => {
-      if (!reduceMotion && zoom === 1 && now - lastInteraction > RESUME_MS) {
+      if (!reduceMotion && zoom === 1 && !selectedRef.current && now - lastInteraction > RESUME_MS) {
         rotation[0] = (rotation[0] + SPIN) % 360;
         draw();
       }
       frame = requestAnimationFrame(tick);
     };
 
+    // The dot nearest the pointer within 12 px, front side of the globe only.
+    const hit = (e) => {
+      const box = el.getBoundingClientRect();
+      const mx = e.clientX - box.left, my = e.clientY - box.top;
+      let best = null;
+      for (const p of seen) {
+        if (!visible(p)) continue;
+        const [x, y] = projection([p.lon, p.lat]);
+        const d = Math.hypot(x - mx, y - my);
+        if (d < 12 && (!best || d < best.d)) best = { p, d, x, y };
+      }
+      return best;
+    };
+
     let drag = null;
     const down = (e) => {
-      drag = { x: e.clientX, y: e.clientY, r: [...rotation] };
+      drag = { x: e.clientX, y: e.clientY, r: [...rotation], moved: false };
       el.setPointerCapture(e.pointerId);
       lastInteraction = performance.now();
     };
     const move = (e) => {
-      if (!drag) return;
+      if (!drag) {
+        el.style.cursor = hit(e) ? "pointer" : "";
+        return;
+      }
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) {
+        drag.moved = true;
+        if (selectedRef.current) setSelected(null);
+      }
+      if (!drag.moved) return;
       const scale = 180 / (Math.PI * radius * zoom);
       rotation[0] = drag.r[0] + (e.clientX - drag.x) * scale;
       rotation[1] = Math.max(-90, Math.min(90, drag.r[1] - (e.clientY - drag.y) * scale));
       lastInteraction = performance.now();
       draw();
     };
-    const up = () => {
+    const up = (e) => {
+      if (drag && !drag.moved) {
+        const h = hit(e);
+        setSelected(h ? { id: h.p.id, x: h.x, y: h.y } : null);
+      }
       drag = null;
       lastInteraction = performance.now();
     };
@@ -195,6 +224,7 @@ export function TravelGlobe({ places, flights }) {
     // Zoom by buttons or double-click; the scroll wheel stays with the page.
     const setZoom = (z) => {
       zoom = Math.max(1, Math.min(8, z));
+      setSelected(null);
       lastInteraction = performance.now();
       draw();
     };
@@ -232,7 +262,8 @@ export function TravelGlobe({ places, flights }) {
   }, [places, flights]);
 
   return (
-    <div ref={wrap} className="flex flex-col items-center">
+    <div ref={wrap} className="relative flex flex-col items-center">
+      {selected && <PlaceCard place={places[selected.id]} x={selected.x} y={selected.y} offset={wrap.current} canvas={canvas.current} onClose={() => setSelected(null)} />}
       <canvas
         ref={canvas}
         role="img"
@@ -240,7 +271,7 @@ export function TravelGlobe({ places, flights }) {
         className="cursor-grab touch-pan-y active:cursor-grabbing"
       />
       <div ref={controls} className="mt-2 flex items-center gap-2">
-        <span className="dk-hint mr-2">Drag to rotate</span>
+        <span className="dk-hint mr-2">Drag to rotate, click a dot for dates</span>
         <button type="button" className="dk-btn" aria-label="Zoom in">+</button>
         <button type="button" className="dk-btn" aria-label="Zoom out">−</button>
         <button type="button" className="dk-btn">Reset</button>
@@ -252,4 +283,57 @@ export function TravelGlobe({ places, flights }) {
 function hexA(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+const fmtDate = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const nightsBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5) + 1;
+const MAX_ROWS = 6;
+
+// Where and when: the place, its last stop of the day, and each stay (or each arrival, for places he only passed
+// through), most recent first.
+function PlaceCard({ place, x, y, offset, canvas, onClose }) {
+  const [all, setAll] = useState(false);
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const left = (canvas?.offsetLeft ?? 0) + x;
+  const top = (canvas?.offsetTop ?? 0) + y;
+  const flipX = offset && left > offset.clientWidth / 2;
+  const rows = place.nights > 0
+    ? [...place.stays].reverse().map(([a, b]) => `${a === b ? fmtDate(a) : `${fmtDate(a)} to ${fmtDate(b)}`} · ${nightsBetween(a, b)} night${nightsBetween(a, b) === 1 ? "" : "s"}`)
+    : [...place.arrivals].reverse().map((d) => `Arrived ${fmtDate(d)}`);
+  return (
+    <div
+      role="dialog"
+      aria-label={place.label}
+      className="absolute z-10 w-[280px] border border-[#b1b4b6] bg-white p-3 text-[14px] leading-[1.45] shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+      style={{ left: flipX ? left - 292 : left + 12, top: Math.max(0, top - 20) }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="font-bold text-[#0b0c0c]">{place.label}</div>
+          {place.name && place.name !== place.label && <div className="text-[13px] text-[#505a5f]">{place.name}</div>}
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-[18px] leading-none text-[#505a5f] hover:text-[#0b0c0c]">
+          ×
+        </button>
+      </div>
+      <div className="mt-1 font-semibold">
+        {place.nights > 0 ? `${place.nights} night${place.nights === 1 ? "" : "s"}` : "No nights"}
+        {place.visits > 0 && <span className="font-normal text-[#505a5f]"> · {place.visits} flight{place.visits === 1 ? "" : "s"} in</span>}
+      </div>
+      <ul className="mt-1 max-h-[240px] overflow-y-auto text-[13px] text-[#26282a]">
+        {(all ? rows : rows.slice(0, MAX_ROWS)).map((r) => (
+          <li key={r}>{r}</li>
+        ))}
+      </ul>
+      {!all && rows.length > MAX_ROWS && (
+        <button type="button" onClick={() => setAll(true)} className="dk-link mt-1 text-[13px]">
+          Show {rows.length - MAX_ROWS} more
+        </button>
+      )}
+    </div>
+  );
 }

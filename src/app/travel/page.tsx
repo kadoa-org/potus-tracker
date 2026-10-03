@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { NightsGrid } from "@/components/NightsGrid";
 import { TravelGlobe } from "@/components/TravelGlobe";
 import { DataTable, Section } from "@/kit";
-import { CATEGORIES, nightsByCategory } from "@/lib/travel";
+import { CATEGORIES, nightsByCategory, placeHistory } from "@/lib/travel";
 import { COLORS } from "@/lib/travelColors";
 import { loadTravel } from "@/lib/travelData";
 
@@ -28,6 +28,7 @@ const formatDate = (date: string) =>
 export default async function TravelPage() {
   const travel = await loadTravel();
   const byCategory = nightsByCategory(travel);
+  const history = placeHistory(travel);
   const total = travel.calendar.length;
   const categoryLabel = Object.fromEntries(CATEGORIES.map((c) => [c.key, c.label]));
   const places = travel.places
@@ -39,18 +40,11 @@ export default async function TravelPage() {
     <div className="pt-4 pb-16">
       <div className="max-w-3xl">
         <h1 className="dk-h1">Where Trump traveled and slept in the past year</h1>
-        <p className="dk-lede">
-          {travel.flights.length} flights and {total} nights, {formatDate(travel.from)} to {formatDate(travel.to)}. He spent{" "}
-          <strong>
-            {travel.weekendsAtProperties} of {travel.weekends} weekends
-          </strong>{" "}
-          at his own properties. Each line is a flight and each glow a place he slept.
-        </p>
       </div>
 
       <div className="mx-auto mb-10 max-w-[760px]">
         <TravelGlobe
-          places={travel.places.map(({ id, lat, lon, label, category, nights, visits }) => ({ id, lat, lon, label, category, nights, visits }))}
+          places={travel.places.map(({ id, lat, lon, label, name, category, nights, visits }, i) => ({ id, lat, lon, label, name, category, nights, visits, ...history[i] }))}
           flights={travel.flights.map(({ from, to }) => ({ from, to }))}
         />
       </div>
@@ -101,7 +95,7 @@ export default async function TravelPage() {
 
       <div className="max-w-3xl text-[13px] leading-[1.5] text-[#505a5f]">
         <p>
-          Source: the President&apos;s public schedule, geocoded. A flight is a move of more than 80 km between two
+          Source: the President&apos;s public schedule, geocoded, {formatDate(travel.from)} to {formatDate(travel.to)}. A flight is a move of more than 80 km between two
           arrivals; lines join the stops, not actual flight paths, and {miles.toLocaleString("en-US")} miles is the
           straight-line total. A night is the last place on each day&apos;s schedule, in Eastern time. A weekend is a
           Saturday night.

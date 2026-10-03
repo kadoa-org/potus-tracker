@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildTravel, nightsByCategory, shortLabel } from "./travel";
+import { buildTravel, nightsByCategory, placeHistory, shortLabel } from "./travel";
 
 const ev = (iso, details, location_name, latitude, longitude) => ({ event_datetime: iso, event_details: details, location_name, latitude, longitude });
 const WH = ["The White House", 38.8977, -77.0365];
@@ -32,6 +32,14 @@ describe("buildTravel", () => {
     expect(t.calendar.map((n) => t.places[n.place].label)).toEqual(["Mar-a-Lago", "Mar-a-Lago", "Washington", "Washington"]);
     expect(nightsByCategory(t)).toMatchObject({ maralago: 2, washington: 2 });
     expect([t.weekends, t.weekendsAtProperties]).toEqual([1, 1]);
+  });
+
+  test("groups consecutive nights into stays and records the date of each arrival", () => {
+    const t = buildTravel(events, { from: "2026-10-02", to: "2026-10-05" });
+    const history = placeHistory(t);
+    const mal = t.places.findIndex((p) => p.label === "Mar-a-Lago");
+    expect(history[mal]).toEqual({ stays: [["2026-10-02", "2026-10-03"]], arrivals: ["2026-10-02"] });
+    expect(history[0].stays).toEqual([["2026-10-04", "2026-10-05"]]);
   });
 
   test("drops moves faster than 1,000 km/h as geocoding mix-ups", () => {

@@ -174,3 +174,18 @@ export function nightsByCategory(travel) {
   for (const n of travel.calendar) counts[travel.places[n.place].category]++;
   return counts;
 }
+
+// Per place: each run of consecutive nights there as a stay, and the dates of each flight that landed there.
+export function placeHistory(travel) {
+  const history = travel.places.map(() => ({ stays: [], arrivals: [] }));
+  let run = null;
+  for (const n of travel.calendar) {
+    if (run && run.place === n.place) run.to = n.date;
+    else {
+      run = { place: n.place, from: n.date, to: n.date };
+      history[n.place].stays.push(run);
+    }
+  }
+  for (const f of travel.flights) history[f.to].arrivals.push(f.date);
+  return history.map(({ stays, arrivals }) => ({ stays: stays.map(({ from, to }) => [from, to]), arrivals }));
+}
