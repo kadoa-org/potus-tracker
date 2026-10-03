@@ -2,6 +2,7 @@
 
 import { addDays, format, isToday, isTomorrow, isYesterday, parseISO, startOfDay } from "date-fns";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
 import { hasMapCoordinates } from "../lib/location";
@@ -12,7 +13,7 @@ import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
 
 // The same globe as the Travel page, zoomed in on where he is now with the last two weeks of flights.
 const loadGlobe = () => import("./TravelGlobe").then((mod) => mod.TravelGlobe);
-const MapSkeleton = () => <div className="h-[420px] w-full animate-pulse bg-[#e5e6e7]" aria-label="Loading map" />;
+const MapSkeleton = () => <div className="h-[240px] w-full animate-pulse bg-[#e5e6e7] sm:h-[320px]" aria-label="Loading map" />;
 const TravelGlobe = dynamic(loadGlobe, { ssr: false, loading: MapSkeleton });
 
 // Deterministic day label from the date STRING (fixed UTC parse) so the server
@@ -207,6 +208,11 @@ export function Schedule({ initial }) {
                 )}
               </div>
             )}
+            <p className="dk-card__footer text-right">
+              <Link href="/travel" className="dk-link">
+                Past year of travel
+              </Link>
+            </p>
           </section>
         </>
       )}

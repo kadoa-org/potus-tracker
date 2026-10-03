@@ -80,7 +80,7 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
     const resize = () => {
       const w = wrap.current.clientWidth;
       width = compact ? w : Math.min(w, 760);
-      height = compact ? 420 : width;
+      height = compact ? (w < 640 ? 240 : 320) : width;
       const dpr = window.devicePixelRatio || 1;
       el.width = width * dpr;
       el.height = height * dpr;
@@ -208,7 +208,7 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         const [x, y] = projection([p.lon, p.lat]);
         const main = OWNED.has(p.category);
         const name = p.label;
-        const sub = main && p.category !== "washington" ? ` ${p.nights} night${p.nights === 1 ? "" : "s"}` : "";
+        const sub = main && !compact && p.category !== "washington" ? ` ${p.nights} night${p.nights === 1 ? "" : "s"}` : "";
         const nameFont = `${main ? 700 : 600} ${main ? 14 : 12}px ${font}`;
         const subFont = `400 ${main ? 14 : 12}px ${font}`;
         ctx.font = nameFont;
