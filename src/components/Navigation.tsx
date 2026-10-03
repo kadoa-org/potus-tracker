@@ -11,7 +11,7 @@ const navItems = [
   { href: "/travel", label: "Travel" },
   { href: "/truth", label: "Truth Social" },
   { href: "/whitehouse", label: "White House" },
-  { href: "/about", label: "About" },
+  { href: "/about", label: "About the data", end: true },
 ];
 
 // Kit chrome passes both `href` and its `to` alias to LinkComponent; strip
@@ -49,7 +49,8 @@ export function Navigation() {
       />
       <NavBar
         LinkComponent={NavLink}
-        items={navItems.map((it) => ({ href: it.href, label: it.label, active: isActive(it.href) }))}
+        collapse
+        items={navItems.map((it) => ({ href: it.href, label: it.label, end: it.end, active: isActive(it.href) }))}
       />
     </>
   );
