@@ -191,12 +191,30 @@ export function TravelGlobe({ places, flights }) {
     };
 
     let drag = null;
+    // Two fingers on a touch screen pinch-zoom the globe instead of rotating it.
+    const pointers = new Map();
+    let pinch = null;
+    const spread = () => {
+      const [a, b] = [...pointers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
     const down = (e) => {
-      drag = { x: e.clientX, y: e.clientY, r: [...rotation], moved: false };
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       el.setPointerCapture(e.pointerId);
       lastInteraction = performance.now();
+      if (pointers.size === 2) {
+        pinch = { d: spread(), z: zoom };
+        drag = null;
+        return;
+      }
+      drag = { x: e.clientX, y: e.clientY, r: [...rotation], moved: false };
     };
     const move = (e) => {
+      if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pointers.size === 2) {
+        setZoom((pinch.z * spread()) / pinch.d);
+        return;
+      }
       if (!drag) {
         el.style.cursor = hit(e) ? "pointer" : "";
         return;
@@ -213,6 +231,8 @@ export function TravelGlobe({ places, flights }) {
       draw();
     };
     const up = (e) => {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinch = null;
       if (drag && !drag.moved) {
         const h = hit(e);
         setSelected(h ? { id: h.p.id, x: h.x, y: h.y } : null);
@@ -221,13 +241,19 @@ export function TravelGlobe({ places, flights }) {
       lastInteraction = performance.now();
     };
 
-    // Zoom by buttons or double-click; the scroll wheel stays with the page.
-    const setZoom = (z) => {
+    // Zoom by ctrl or cmd plus scroll (also a trackpad pinch), buttons or double-click. A plain scroll stays with the
+    // page.
+    const wheel = (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      setZoom(zoom * Math.exp(-e.deltaY * 0.01));
+    };
+    function setZoom(z) {
       zoom = Math.max(1, Math.min(8, z));
       setSelected(null);
       lastInteraction = performance.now();
       draw();
-    };
+    }
     const zoomIn = () => setZoom(zoom * 1.6);
     const zoomOut = () => setZoom(zoom / 1.6);
     const reset = () => {
@@ -239,6 +265,7 @@ export function TravelGlobe({ places, flights }) {
     outBtn.addEventListener("click", zoomOut);
     resetBtn.addEventListener("click", reset);
     el.addEventListener("dblclick", zoomIn);
+    el.addEventListener("wheel", wheel, { passive: false });
 
     const observer = new ResizeObserver(resize);
     observer.observe(wrap.current);
@@ -255,6 +282,7 @@ export function TravelGlobe({ places, flights }) {
       el.removeEventListener("pointerup", up);
       el.removeEventListener("pointercancel", up);
       el.removeEventListener("dblclick", zoomIn);
+      el.removeEventListener("wheel", wheel);
       inBtn.removeEventListener("click", zoomIn);
       outBtn.removeEventListener("click", zoomOut);
       resetBtn.removeEventListener("click", reset);
@@ -271,7 +299,6 @@ export function TravelGlobe({ places, flights }) {
         className="cursor-grab touch-pan-y active:cursor-grabbing"
       />
       <div ref={controls} className="mt-2 flex items-center gap-2">
-        <span className="dk-hint mr-2">Drag to rotate, click a dot for dates</span>
         <button type="button" className="dk-btn" aria-label="Zoom in">+</button>
         <button type="button" className="dk-btn" aria-label="Zoom out">−</button>
         <button type="button" className="dk-btn">Reset</button>

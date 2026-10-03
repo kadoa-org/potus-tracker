@@ -38,7 +38,7 @@ export default async function TravelPage() {
 
   return (
     <div className="pt-4 pb-16">
-      <div className="max-w-3xl">
+      <div className="mx-auto max-w-3xl text-center">
         <h1 className="dk-h1">Where Trump traveled and slept in the past year</h1>
       </div>
 
