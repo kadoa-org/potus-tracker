@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { COLORS, TravelMap } from "@/components/TravelMap";
+import { NightsGrid } from "@/components/NightsGrid";
+import { TravelGlobe } from "@/components/TravelGlobe";
 import { DataTable, Section } from "@/kit";
 import { CATEGORIES, nightsByCategory } from "@/lib/travel";
+import { COLORS } from "@/lib/travelColors";
 import { loadTravel } from "@/lib/travelData";
 
 // Rebuilt from the schedule every six hours; the map covers the last 365 complete nights.
@@ -10,7 +12,7 @@ export const revalidate = 21600;
 const URL = "https://www.kadoa.com/potus/travel";
 const TITLE = "Trump Travel Map: Every Flight and Night in the Past Year";
 const DESCRIPTION =
-  "Where President Trump traveled and slept over the past year: every flight on one map centred on the White House, and a calendar of each night, from his public schedule.";
+  "Where President Trump traveled and slept over the past year: every flight on a globe you can rotate, and a calendar of each night, from his public schedule.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -42,14 +44,28 @@ export default async function TravelPage() {
           <strong>
             {travel.weekendsAtProperties} of {travel.weekends} weekends
           </strong>{" "}
-          at his own properties. Each line is a flight, each glow a place he slept, and the ring is the year, one segment per
-          night.
+          at his own properties. Each line is a flight and each glow a place he slept.
         </p>
       </div>
 
-      <div className="mx-auto max-w-[900px]">
-        <TravelMap travel={travel} />
+      <div className="mx-auto mb-10 max-w-[760px]">
+        <TravelGlobe
+          places={travel.places.map(({ id, lat, lon, label, category, nights, visits }) => ({ id, lat, lon, label, category, nights, visits }))}
+          flights={travel.flights.map(({ from, to }) => ({ from, to }))}
+        />
       </div>
+
+      <Section title="Where he slept each night" description="One square per night, one column per week. Hover a square for the date and place.">
+        <NightsGrid travel={travel} />
+        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
+          {CATEGORIES.filter((c) => byCategory[c.key] > 0).map((c) => (
+            <li key={c.key} className="flex items-center gap-2">
+              <i className="block h-4 w-4 rounded-[2px]" style={{ background: COLORS[c.key as keyof typeof COLORS].cell }} />
+              {c.label}
+            </li>
+          ))}
+        </ul>
+      </Section>
 
       <Section title="Nights, by place">
         <div className="flex h-[30px] gap-[2px]">
@@ -59,7 +75,7 @@ export default async function TravelPage() {
               className="flex items-center justify-center text-[15px] font-bold"
               style={{
                 flex: byCategory[c.key],
-                background: COLORS[c.key as keyof typeof COLORS].ring,
+                background: COLORS[c.key as keyof typeof COLORS].cell,
                 color: ["washington", "property", "us"].includes(c.key) ? "#0b0c0c" : "#fff",
               }}
               title={`${c.label}: ${byCategory[c.key]} nights`}
@@ -68,14 +84,6 @@ export default async function TravelPage() {
             </span>
           ))}
         </div>
-        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
-          {CATEGORIES.filter((c) => byCategory[c.key] > 0).map((c) => (
-            <li key={c.key} className="flex items-center gap-2">
-              <i className="block h-4 w-4" style={{ background: COLORS[c.key as keyof typeof COLORS].ring }} />
-              {c.label}
-            </li>
-          ))}
-        </ul>
       </Section>
 
       <Section title="Every place he slept" description={`${places.length} places over ${total} nights.`}>
@@ -96,7 +104,7 @@ export default async function TravelPage() {
           Source: the President&apos;s public schedule, geocoded. A flight is a move of more than 80 km between two
           arrivals; lines join the stops, not actual flight paths, and {miles.toLocaleString("en-US")} miles is the
           straight-line total. A night is the last place on each day&apos;s schedule, in Eastern time. A weekend is a
-          Saturday night. Inside the dashed circle the map is true to scale; beyond it, distances are compressed.
+          Saturday night.
         </p>
       </div>
     </div>
