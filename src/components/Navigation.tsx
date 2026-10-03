@@ -8,6 +8,7 @@ import { GitHubButton, NavBar, SiteHeader } from "@/kit";
 const navItems = [
   { href: "/", label: "Today" },
   { href: "/schedule", label: "Schedule" },
+  { href: "/travel", label: "Travel" },
   { href: "/truth", label: "Truth Social" },
   { href: "/whitehouse", label: "White House" },
   { href: "/about", label: "About" },
