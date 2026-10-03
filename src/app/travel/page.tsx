@@ -37,12 +37,13 @@ export default async function TravelPage() {
   const miles = Math.round(travel.totalKm / 1.609);
 
   return (
-    <div className="pt-4 pb-16">
-      <div className="mx-auto max-w-3xl text-center">
-        <h1 className="dk-h1">Where Trump traveled and slept in the past year</h1>
+    <main className="pb-16">
+      <div className="mb-8">
+        <h1 className="dk-h1">Trump&apos;s Travel Map</h1>
+        <p className="text-[19px] text-[#505a5f] m-0">Every flight and every night of the past year, from his public schedule.</p>
       </div>
 
-      <div className="mx-auto mb-10 max-w-[760px]">
+      <div className="mx-auto mb-10 w-full max-w-[760px]">
         <TravelGlobe {...globeData(travel, history)} now={now} />
       </div>
 
@@ -98,6 +99,6 @@ export default async function TravelPage() {
           Saturday night.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
