@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AboutPage as KitAboutPage } from "@/kit";
 
 export const metadata: Metadata = {
   title: "About the Data | POTUS Tracker",
@@ -7,39 +8,53 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://www.kadoa.com/potus/about" },
 };
 
-function ExtLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="dk-link">
-      {children}
-    </a>
-  );
-}
+const REPO = "https://github.com/kadoa-org/potus-tracker";
 
+// The root layout already wraps every page in .dk-container, so the page renders the kit component directly.
 export default function AboutPage() {
   return (
-    <div className="pt-4 pb-16">
-      <div className="max-w-3xl">
-        <h1 className="dk-h1">About the data</h1>
-        <p className="text-[15px] leading-[1.5] text-[#505a5f]">
-          A live view of the presidency: official White House actions and executive orders, Trump&apos;s Truth Social
-          posts scored by impact, and the president&apos;s public schedule, updated in real time with{" "}
-          <ExtLink href="https://kadoa.com">kadoa.com</ExtLink>. Every item links to its official source. The code is
-          open source on <ExtLink href="https://github.com/kadoa-org/potus-tracker">GitHub</ExtLink>.
-        </p>
-      </div>
-
-      <div className="mt-8 max-w-5xl">
-        <div className="border border-[#b1b4b6] bg-white p-5">
-          <p className="text-[14px] leading-[1.5] text-[#26282a]">
-            <ExtLink href="https://kadoa.com">Kadoa</ExtLink> is the web data layer for finance, providing the most
-            reliable datasets for investors.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-16 max-w-3xl text-[13px] text-[#505a5f]">
-        <p>For informational purposes. News summaries are AI-generated; every item links to its official source.</p>
-      </div>
-    </div>
+    <KitAboutPage
+      lede="White House actions, Trump's Truth Social posts and the president's public schedule, in one live record. Free to use."
+      sources={[
+        { name: "White House", href: "https://www.whitehouse.gov/news/", what: "News, executive orders and other actions" },
+        { name: "Trump's Truth", href: "https://www.trumpstruth.org/", what: "Archive of Truth Social posts" },
+        { name: "Factbase", href: "https://rollcall.com/factbase/trump/topic/calendar/", what: "The president's public schedule" },
+      ]}
+      steps={[
+        { title: "Monitor", text: "Kadoa checks the White House, Truth Social and the public schedule for new items." },
+        { title: "Extract", text: "It pulls out each action, post and event with its date and link." },
+        { title: "Enrich", text: "AI summarizes each action, rates each post's impact and places each event on the map." },
+        { title: "Link", text: "Every item links back to its original source." },
+      ]}
+      methods={[
+        {
+          title: "Limits",
+          body: [
+            "New items can take a while to appear.",
+            "The schedule lists only public events, and some have no time.",
+            "Summaries, impact ratings and locations come from AI and can be wrong. Check the linked source.",
+          ],
+        },
+        {
+          title: "Impact ratings",
+          body: [
+            "Each Truth Social post is rated high, medium or low by its real-world effect, not its tone.",
+            "High is a concrete action or a statement that moves markets or foreign relations now, such as a tariff with terms or a firing. Medium is a credible sign of coming action or real policy comment. Low covers campaign posts, praise, attacks and reposts.",
+          ],
+        },
+        {
+          title: "Travel map",
+          body: [
+            "A flight is a move of more than 80 km between arrivals. Stops within 80 km count as one place, so Joint Base Andrews is Washington.",
+            "A night is the place of the last event that day, Eastern time, carried forward over days with no events. The map covers the last 365 nights.",
+          ],
+        },
+      ]}
+      corrections={
+        <>
+          Found an error? <a href={`${REPO}/issues`}>Open an issue on GitHub</a>.
+        </>
+      }
+    />
   );
 }
