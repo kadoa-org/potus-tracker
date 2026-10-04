@@ -87,8 +87,8 @@ export default function RootLayout({
             {/* w-full: .dk-container centres with `margin: 0 auto`, but as a
                 flex-column child the auto side-margins disable stretch, so it
                 would otherwise shrink to content width (narrow pages like the
-                schedule collapsed to ~877px). width:100% pins it to the 960px
-                max on every page. */}
+                schedule collapsed to ~877px). width:100% pins it to the
+                full page width on every page. */}
             <div className="dk-container w-full" style={{ paddingTop: 30, paddingBottom: 16 }}>{children}</div>
           </div>
           <SiteFooter current="potus" />
