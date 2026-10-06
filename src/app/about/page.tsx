@@ -14,6 +14,7 @@ const REPO = "https://github.com/kadoa-org/potus-tracker";
 export default function AboutPage() {
   return (
     <KitAboutPage
+      dataset="potus"
       lede="White House actions, Trump's Truth Social posts and the president's public schedule, in one live record."
       sources={[
         { name: "White House", href: "https://www.whitehouse.gov/news/", what: "News, executive orders and other actions" },
