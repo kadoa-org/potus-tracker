@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "../lib/basePath";
 import { hasMapCoordinates } from "../lib/location";
 import { eventTimeLabel, inDayOrder } from "../lib/schedule";
+import { addDays as addDay, etClock, latestTrip, nextStop } from "../lib/travel";
 import { SectionHeading } from "../kit";
 import { FetchStatus } from "./FetchStatus.jsx";
 import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
@@ -162,10 +163,22 @@ export function Schedule({ initial }) {
 
   const groupedData = schedule ? groupEventsByDay(schedule) : {};
   const canShowMap = hasMapCoordinates(location);
+  // The map shows only his latest trip, so it never mixes in older routes.
+  const trip = useMemo(() => (recent ? latestTrip(recent) : []), [recent]);
   const now = useMemo(
     () => (canShowMap ? { lat: location.lat, lon: location.lon, label: location.locationName || "Unknown" } : null),
     [canShowMap, location?.lat, location?.lon, location?.locationName],
   );
+  // His next scheduled stop away from here, drawn dashed: "Baltimore · 4:00 PM", "tomorrow 9:00 AM" or "time TBD".
+  const next = useMemo(() => {
+    if (!now || !Array.isArray(schedule)) return null;
+    const clock = etClock();
+    const stop = nextStop(schedule, now, clock);
+    if (!stop) return null;
+    const today = clock.slice(0, 10);
+    const day = stop.date === today ? "" : stop.date === addDay(today, 1) ? "tomorrow " : `${format(new Date(`${stop.date}T12:00:00`), "MMM d")} `;
+    return { ...stop, text: `${stop.label} · ${day}${eventTimeLabel(stop.time) ?? "time TBD"}` };
+  }, [now, schedule]);
 
   // "Sep 26, 2026 at 12:00 PM" from the stored Eastern wall-clock time, which carries a +00:00 offset.
   const updatedLabel = (() => {
@@ -202,7 +215,7 @@ export function Schedule({ initial }) {
             {canShowMap && (
               <div className="dk-card__panel relative" style={{ padding: 0 }}>
                 {recentDone ? (
-                  <TravelGlobe places={recent?.places ?? []} flights={recent?.flights ?? []} to={recent?.to} now={now} compact startZoom={3} />
+                  <TravelGlobe places={recent?.places ?? []} flights={recent?.flights ?? []} to={recent?.to} now={now} compact startZoom={3} trip={trip} next={next} />
                 ) : (
                   <MapSkeleton />
                 )}

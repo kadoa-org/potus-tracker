@@ -192,3 +192,56 @@ export function placeHistory(travel) {
   for (const f of travel.flights) history[f.to].arrivals.push(f.date);
   return history.map(({ stays, arrivals }) => ({ stays: stays.map(({ from, to }) => [from, to]), arrivals }));
 }
+
+// Where he flies from and back to. A trip starts at the last departure from one of these.
+const HOMES = new Set(["washington", "maralago", "bedminster", "property"]);
+
+// The trip that ends with his latest flight: its legs, back to his last departure from a home (Washington or a Trump
+// property), within a week. Empty when that flight is more than `recentDays` before `to`, so a map of where he is now
+// never draws an old route as if it were current.
+export function latestTrip({ places, flights, to }, { recentDays = 3, maxSpanDays = 7 } = {}) {
+  const last = flights.at(-1);
+  if (!last || !to || last.date < addDays(to, -recentDays)) return [];
+  const legs = [];
+  for (let i = flights.length - 1; i >= 0; i--) {
+    const f = flights[i];
+    if (f.date < addDays(last.date, -maxSpanDays)) break;
+    legs.unshift(f);
+    if (HOMES.has(places[f.from]?.category)) break;
+  }
+  return legs;
+}
+
+
+// Washington's wall-clock time now, as "YYYY-MM-DDTHH:MM", the form schedule times are stored in.
+export const etClock = (date = new Date()) =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .format(date)
+    .replace(" ", "T");
+
+const clockPlus = (clock, hours) => {
+  const d = new Date(`${clock}:00Z`);
+  d.setUTCHours(d.getUTCHours() + hours);
+  return d.toISOString().slice(0, 16);
+};
+
+// His next scheduled stop away from where he is now: the first upcoming event at least `minKm` from `here`, within
+// `hours`. The threshold is lower than the 80 km that joins places in his travel history, so a day trip to Baltimore
+// counts. Schedule times are Eastern wall-clock labelled +00:00; a 00:00 time is a date-only placeholder, so such an
+// event counts for its whole day and carries no time.
+export function nextStop(events, here, now, { minKm = 30, hours = 36 } = {}) {
+  if (!here) return null;
+  const until = clockPlus(now, hours);
+  const away = events
+    .filter((e) => e.location && e.time && km({ lat: e.location.lat, lon: e.location.lng }, here) >= minKm)
+    .map((e) => ({ e, day: e.time.slice(0, 10), clock: e.time.slice(0, 16), dateOnly: e.time.slice(11, 16) === "00:00" }));
+  const timed = away.filter((c) => !c.dateOnly && c.clock > now && c.clock <= until).sort((a, b) => a.clock.localeCompare(b.clock))[0];
+  // A placeholder stands in only while that day has no timed event at the same place; once one exists, it replaces it,
+  // so a trip that has already happened today is not shown as next.
+  const timedThere = (c) => away.some((t) => !t.dateOnly && t.day === c.day && km({ lat: t.e.location.lat, lon: t.e.location.lng }, { lat: c.e.location.lat, lon: c.e.location.lng }) < minKm);
+  const undated = away.filter((c) => c.dateOnly && c.day >= now.slice(0, 10) && c.day <= until.slice(0, 10) && !timedThere(c)).sort((a, b) => a.day.localeCompare(b.day))[0];
+  // A placeholder only wins when it falls on an earlier day than the first event with a real time.
+  const pick = undated && (!timed || undated.day < timed.day) ? undated : timed;
+  if (!pick) return null;
+  return { lat: pick.e.location.lat, lon: pick.e.location.lng, label: shortLabel(pick.e.locationStr ?? ""), date: pick.day, time: pick.dateOnly ? null : pick.e.time };
+}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildTravel, nightsByCategory, placeHistory, shortLabel } from "./travel";
+import { buildTravel, latestTrip, nextStop, nightsByCategory, placeHistory, shortLabel } from "./travel";
 
 const ev = (iso, details, location_name, latitude, longitude) => ({ event_datetime: iso, event_details: details, location_name, latitude, longitude });
 const WH = ["The White House", 38.8977, -77.0365];
@@ -72,4 +72,58 @@ describe("shortLabel", () => {
     ["Fort Bragg, NC", "Fort Bragg"],
     ["Trump International Golf Links and Hotel Ireland, Doonbeg", "Doonbeg"],
   ])("%s is %s", (name, label) => expect(shortLabel(name)).toBe(label));
+});
+
+describe("latestTrip", () => {
+  const place = (category, label) => ({ category, label });
+  const places = [place("washington", "Washington"), place("us", "Dallas"), place("us", "Mobile"), place("bedminster", "Bedminster")];
+  const f = (from, to, date) => ({ from, to, date });
+
+  test("is the legs since he last left a home, oldest first", () => {
+    // Washington to Dallas, on to Mobile, back to Washington: one trip. The earlier Bedminster weekend is not part of it.
+    const flights = [f(0, 3, "2026-09-26"), f(3, 0, "2026-09-28"), f(0, 1, "2026-10-02"), f(1, 2, "2026-10-03"), f(2, 0, "2026-10-04")];
+    expect(latestTrip({ places, flights, to: "2026-10-05" }).map((l) => [places[l.from].label, places[l.to].label])).toEqual([
+      ["Washington", "Dallas"],
+      ["Dallas", "Mobile"],
+      ["Mobile", "Washington"],
+    ]);
+  });
+
+  test("is empty when the latest flight is more than three days old, so no stale route is drawn as current", () => {
+    const flights = [f(0, 1, "2026-09-29"), f(1, 0, "2026-09-30")];
+    expect(latestTrip({ places, flights, to: "2026-10-06" })).toEqual([]);
+    expect(latestTrip({ places, flights, to: "2026-10-03" })).toHaveLength(2);
+  });
+
+  test("stops a week before the latest flight even if he never passed through a home", () => {
+    const flights = [f(1, 2, "2026-09-20"), f(2, 1, "2026-10-01"), f(1, 2, "2026-10-03")];
+    expect(latestTrip({ places, flights, to: "2026-10-04" })).toHaveLength(2);
+  });
+});
+
+
+describe("nextStop", () => {
+  const here = { lat: 38.8977, lon: -77.0365 }; // The White House
+  const e = (time, title, locationStr, lat, lng) => ({ time, title, locationStr, location: { lat, lng } });
+  const today = [
+    e("2026-10-06T00:00:00+00:00", "TBD: The President departs the White House en route Baltimore, Maryland", "The White House", 38.8977, -77.0365),
+    e("2026-10-06T00:00:00+00:00", "TBD: The President arrives Baltimore, Maryland", "Sparrows Point Shipyard, Baltimore", 39.2178, -76.4744),
+    e("2026-10-06T11:00:00+00:00", "The President participates in a Policy Meeting", "Oval Office", 38.8977, -77.0365),
+    e("2026-10-06T16:00:00+00:00", "The President delivers Remarks", "Sparrows Point Shipyard, Baltimore", 39.2178, -76.4744),
+    e("2026-10-06T23:56:00+00:00", "The President arrives at The White House", "The White House", 38.8977, -77.0365),
+  ];
+
+  test("is the first upcoming event away from where he is, with its time", () => {
+    expect(nextStop(today, here, "2026-10-06T09:00")).toEqual({ lat: 39.2178, lon: -76.4744, label: "Baltimore", date: "2026-10-06", time: "2026-10-06T16:00:00+00:00" });
+  });
+
+  test("is nothing once the trip's last stop away has passed, and nothing within 30 km", () => {
+    expect(nextStop(today, here, "2026-10-06T17:00")).toBeNull();
+    expect(nextStop([e("2026-10-06T15:00:00+00:00", "Arrives", "Joint Base Andrews", 38.81, -76.87)], here, "2026-10-06T09:00")).toBeNull();
+  });
+
+  test("falls back to a date-only placeholder, without a time, when it is the earliest sign of the trip", () => {
+    const placeholderOnly = today.filter((x) => !x.title.startsWith("The President delivers"));
+    expect(nextStop(placeholderOnly, here, "2026-10-06T09:00")).toMatchObject({ label: "Baltimore", time: null });
+  });
 });
