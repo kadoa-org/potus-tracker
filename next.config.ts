@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         // !! WARN !!
         ignoreBuildErrors: true,
     },
+    // The travel map moved to an insight page; keep its old links and search ranking.
+    async redirects() {
+        return [{ source: '/travel', destination: '/insights/travel-map', permanent: true }];
+    },
     async rewrites() {
         return [
             {

@@ -27,43 +27,47 @@ export const CATEGORY_LABEL = {
 // dashboard does for its trends. The tag names what is measured, so it reads on its own: a single word such as
 // "Minor" did not say minor what. Colour is a second cue, never the only one; low stays grey because it means noise.
 const TONE = { high: "red", medium: "orange", low: "grey" };
-export function ImpactMeter({ signal }) {
+// `full` names the measure ("Medium impact") for a tag that stands alone, without a key next to it.
+export function ImpactMeter({ signal, full = false }) {
   const level = SIG[signal];
   if (!level) return null;
-  return <strong className={`gov-tag gov-tag--${TONE[signal]}`}>{level.short}</strong>;
+  return <strong className={`gov-tag gov-tag--${TONE[signal]}`}>{full ? level.label : level.short}</strong>;
 }
 
-// A post's properties as a GOV.UK summary list, the design system's pattern for a set of key and value pairs, in its
-// compact form without row borders: impact, topic, who the post mentions and its source, one row each.
+// The card footer, one quiet line: topic and who the post mentions on the left, the link to the original on the right.
+// Impact sits on the timeline next to the date, so it is not repeated here.
 export function PostProperties({ post }) {
   const mentions = Array.isArray(post.entities) ? post.entities.map((e) => e.name).filter(Boolean) : [];
   const rows = [
-    post.signal && ["Impact", <ImpactMeter signal={post.signal} />],
     post.category && ["Topic", CATEGORY_LABEL[post.category] ?? "Other"],
     mentions.length > 0 && ["Mentions", mentions.join(", ")],
-    // Where the post was published is a property of it like the rest, so its link is a row rather than a loose link
-    // under the list. Historical rows may still carry the aggregator URL, and the label must not promise Truth Social
-    // when the link goes elsewhere.
-    post.original_post_link && [
-      "Source",
-      <a href={post.original_post_link} target="_blank" rel="noreferrer" className="dk-link inline-flex items-center gap-1">
-        {/truthsocial\.com/.test(post.original_post_link) ? "Truth Social" : "Original post"}
-        <span className="dk-visually-hidden"> (opens in a new tab)</span>
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
-      </a>,
-    ],
   ].filter(Boolean);
-  if (!rows.length) return null;
+  const link = post.original_post_link;
+  if (!rows.length && !link) return null;
   return (
-    <dl className="gov-summary-list">
-      {rows.map(([key, value]) => (
-        <div className="gov-summary-list__row" key={key}>
-          <dt className="gov-summary-list__key">{key}</dt>
-          <dd className="gov-summary-list__value">{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <div className="post-card__footer">
+      {rows.length > 0 && (
+        <p className="post-card__props">
+          {rows.map(([key, value], i) => (
+            <span key={key}>
+              {i > 0 && " · "}
+              {key === "Mentions" ? <span className="dk-visually-hidden">Mentions: </span> : null}
+              {value}
+            </span>
+          ))}
+        </p>
+      )}
+      {/* Historical rows may still carry the aggregator URL, and the label must not promise Truth Social when the link
+          goes elsewhere. */}
+      {link && (
+        <a href={link} target="_blank" rel="noreferrer" className="dk-link post-card__source">
+          {/truthsocial\.com/.test(link) ? "View on Truth Social" : "View the original post"}
+          <span className="dk-visually-hidden"> (opens in a new tab)</span>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      )}
+    </div>
   );
 }

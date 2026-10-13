@@ -8,9 +8,9 @@ import { GitHubButton, NavBar, SiteHeader } from "@/kit";
 const navItems = [
   { href: "/", label: "Today" },
   { href: "/schedule", label: "Schedule" },
-  { href: "/travel", label: "Travel" },
   { href: "/truth", label: "Truth Social" },
   { href: "/whitehouse", label: "White House" },
+  { href: "/insights", label: "Insights", section: true },
   { href: "/about", label: "About the data", end: true },
 ];
 
@@ -23,7 +23,8 @@ const NavLink = ({ to: _to, ...props }: { to?: string; [key: string]: unknown })
 export function Navigation() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path;
+  // Insights is a section: its index and every insight page under it mark the tab.
+  const isActive = (path: string, section = false) => pathname === path || (section && pathname.startsWith(`${path}/`));
 
   return (
     <>
@@ -50,7 +51,7 @@ export function Navigation() {
       <NavBar
         LinkComponent={NavLink}
         collapse
-        items={navItems.map((it) => ({ href: it.href, label: it.label, end: it.end, active: isActive(it.href) }))}
+        items={navItems.map((it) => ({ href: it.href, label: it.label, end: it.end, active: isActive(it.href, "section" in it) }))}
       />
     </>
   );

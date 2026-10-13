@@ -222,7 +222,7 @@ export function Schedule({ initial }) {
               </div>
             )}
             <p className="dk-card__footer text-right">
-              <Link href="/travel" className="dk-link">
+              <Link href="/insights/travel-map" className="dk-link">
                 Travel history
               </Link>
             </p>
