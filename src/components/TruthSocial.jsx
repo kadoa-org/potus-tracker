@@ -36,137 +36,93 @@ const LONG_POST = 420;
 const words = (text) => (text || "").trim().split(/\s+/).length;
 
 const timeOf = (iso) => govDateTime(iso).split(" at ")[1];
-const External = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-  </svg>
-);
 const MEDIA_TAG = { video: "Video", image: "Image" };
+const mediaNoun = (kinds) => (kinds.length > 1 ? "media" : kinds[0]);
 
-// One post as a DWP timeline item with its content in a simple card: when it was posted and its impact sit on the
-// timeline, and the card holds our AI note on why it matters as the title, the post itself, and a one-line footer with
-// its topic, mentions and source. No shadow: the card is not a link, and a shadow would say it is.
+// One post as a DWP timeline item holding a GOV.UK summary card. The tick carries when it was posted and its impact; the
+// card's grey title bar carries our AI note on why it matters (the summary card's title names what the card is about),
+// and the content is the post: his words as body text, then for an image or a video what it shows, as the pipeline's
+// model described it, and a footer line with topic, mentions and the link to the original.
 // `pinned` marks the post a dashboard link points at, shown on its own above the timeline.
 const TruthSocialPost = ({ post, parsed, label, pinned = false }) => {
   const long = parsed.text.length > LONG_POST;
   const [open, setOpen] = useState(false);
   const when = govDateTime(post.timestamp);
+  const note = realNote(post) ? post.why_it_matters : null;
+  // The pipeline's media list is exact; the text's link labels also name a quoted post's media, so they are the fallback.
+  const kinds = Array.isArray(post.media) ? [...new Set(post.media.map((m) => m.type))] : parsed.media;
   return (
     <>
       <p className="post-timeline__when" suppressHydrationWarning>
         {pinned && <strong>Linked post · </strong>}
         {when}
         <ImpactMeter signal={post.signal} full />
+        {/* What the post carries, in GOV.UK's blue tag so it never reads as a level of impact. */}
+        {kinds.map((m) => (
+          <strong key={m} className="gov-tag gov-tag--blue">
+            {MEDIA_TAG[m]}
+          </strong>
+        ))}
       </p>
       <article className={`post-card${pinned ? " post-card--pinned" : ""}`} aria-labelledby={`post-title-${post.id}`}>
-        <h2 className="post-card__title" id={`post-title-${post.id}`}>
-          {parsed.mediaOnly ? (
-            label
-          ) : (
-            <>
-              <span className="dk-visually-hidden">AI summary: </span>
-              {post.why_it_matters || "Post on Truth Social"}
-            </>
-          )}
-        </h2>
-        {/* His words are the content, so they are never hidden: a long post shows its first lines and a button opens
-            the rest in place (progressive disclosure). The full text is in the HTML either way. */}
-        {!parsed.mediaOnly && (
-          <blockquote className="post-card__text" cite={post.original_post_link || undefined}>
-            <div id={`post-${post.id}`} className={`whitespace-pre-wrap break-words ${long && !open ? "line-clamp-4" : ""}`}>
-              {renderTextWithLinks(parsed.text)}
-            </div>
-            {long && (
-              <button type="button" className="gov-button-secondary" aria-expanded={open} aria-controls={`post-${post.id}`} onClick={() => setOpen((o) => !o)}>
-                {open ? "Show less" : `Show the full post (${words(parsed.text)} words)`}
-              </button>
+        <div className="post-card__title-wrapper">
+          <h2 className="post-card__title" id={`post-title-${post.id}`}>
+            {note ? (
+              <>
+                <span className="dk-visually-hidden">AI summary: </span>
+                {note}
+              </>
+            ) : (
+              label
             )}
-          </blockquote>
-        )}
-        {!parsed.mediaOnly && parsed.media.length > 0 && (
-          <p className="post-card__media">
-            {parsed.media.map((m) => (
-              <span key={m} className="gov-tag gov-tag--grey">
-                {MEDIA_TAG[m]}
-              </span>
-            ))}
-          </p>
-        )}
-        <PostProperties post={post} />
+          </h2>
+        </div>
+        <div className="post-card__content">
+          {/* His words are the content, so they are never hidden: a long post shows its first lines and a button opens
+              the rest in place (progressive disclosure). The full text is in the HTML either way. */}
+          {parsed.mediaOnly ? (
+            note && parsed.repostOf && <p className="post-card__text">{label}.</p>
+          ) : (
+            <blockquote className="post-card__text" cite={post.original_post_link || undefined}>
+              <div id={`post-${post.id}`} className={`whitespace-pre-wrap break-words ${long && !open ? "line-clamp-4" : ""}`}>
+                {renderTextWithLinks(parsed.text)}
+              </div>
+              {long && (
+                <button type="button" className="gov-button-secondary" aria-expanded={open} aria-controls={`post-${post.id}`} onClick={() => setOpen((o) => !o)}>
+                  {open ? "Show less" : `Show the full post (${words(parsed.text)} words)`}
+                </button>
+              )}
+            </blockquote>
+          )}
+          {kinds.length > 0 && post.media_description && (
+            // What the image or the video's first frame shows, as Gemini described it in the pipeline. With no words of
+            // his own it is the post's content, so it reads as body text; under his words it is a quieter note.
+            <p className={`post-card__media-text${parsed.mediaOnly ? " post-card__media-text--main" : ""}`}>
+              <span className="dk-visually-hidden">AI description of the {mediaNoun(kinds)}: </span>
+              {post.media_description}
+            </p>
+          )}
+          <PostProperties post={post} />
+        </div>
       </article>
     </>
   );
 };
 
-// A post with no words of his own (a video, an image, a repost) as one line on the timeline instead of a card: there is
-// nothing to read, and the AI note on it only said so at length. It is always low impact, so the tag is left off.
-const MediaLine = ({ post, label, withDate = true }) => (
-  <p className="post-timeline__when post-timeline__media" suppressHydrationWarning>
-    <span>{withDate ? govDateTime(post.timestamp) : timeOf(post.timestamp)}</span>
-    <span className="post-timeline__label">{label}</span>
-    {post.original_post_link && (
-      <a href={post.original_post_link} target="_blank" rel="noreferrer" className="dk-link post-card__source">
-        View on Truth Social
-        <span className="dk-visually-hidden"> (opens in a new tab)</span>
-        <External />
-      </a>
-    )}
-  </p>
-);
+// The pipeline's canned note for a post it never sent to the model is not a note.
+const realNote = (post) => Boolean(post.why_it_matters) && !post.why_it_matters.startsWith("Media-only or very short post");
 
-// Three or more media posts in a row fold into one line, with a button to list them.
-const MediaGroup = ({ items }) => {
-  const [open, setOpen] = useState(false);
-  const newest = items[0].post, oldest = items.at(-1).post;
-  const date = govDateTime(newest.timestamp).split(" at ")[0];
-  const span = timeOf(oldest.timestamp) === timeOf(newest.timestamp) ? timeOf(newest.timestamp) : `${timeOf(oldest.timestamp)} to ${timeOf(newest.timestamp)}`;
-  const id = `media-${newest.id}`;
-  return (
-    <>
-      <p className="post-timeline__when post-timeline__media" suppressHydrationWarning>
-        <span>{date}, {span}</span>
-        <span className="post-timeline__label">{items.length} media posts</span>
-        <button type="button" className="text-button dk-link post-card__source" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>
-          {open ? "Hide them" : "Show them"}
-        </button>
-      </p>
-      {open && (
-        <ul id={id} className="post-timeline__group">
-          {items.map(({ post, label }) => (
-            <li key={post.id}>
-              <MediaLine post={post} label={label} withDate={false} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
-};
-
-// Each post parsed once, with its plain label when it is media only; a repost is named after the post it repeats when
-// that post is on the same page. Then runs of three or more media posts become one group.
+// Each post parsed once, with a plain label for a post without words ("Shared a video"); a repost is named after the
+// post it repeats when that post is on the same page.
 const statusId = (link) => (link || "").split("/").pop();
 function timelineEntries(posts) {
   const parsed = posts.map((post) => ({ post, parsed: parsePost(post.text) }));
   const byId = new Map(parsed.map((e) => [statusId(e.post.original_post_link), e]));
-  const items = parsed.map((e) => {
+  return parsed.map((e) => {
     const original = e.parsed.repostOf && byId.get(e.parsed.repostOf);
     const label = mediaLabel(e.parsed, original && { media: original.parsed.media, time: timeOf(original.post.timestamp) });
-    return { ...e, label };
+    return { key: e.post.id, ...e, label };
   });
-  const out = [];
-  for (let i = 0; i < items.length; ) {
-    let j = i;
-    while (j < items.length && items[j].parsed.mediaOnly) j++;
-    if (j - i >= 3) {
-      out.push({ key: `group-${items[i].post.id}`, group: items.slice(i, j) });
-      i = j;
-    } else {
-      out.push({ key: items[i].post.id, ...items[i] });
-      i++;
-    }
-  }
-  return out;
 }
 
 const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
@@ -308,14 +264,8 @@ export function TruthSocial({ initial, postId }) {
         ) : (
           <ol className="post-timeline">
             {timelineEntries(viewData).map((e) => (
-              <li key={e.key} className={`post-timeline__item${e.group || e.parsed.mediaOnly ? " post-timeline__item--line" : ""}`}>
-                {e.group ? (
-                  <MediaGroup items={e.group} />
-                ) : e.parsed.mediaOnly ? (
-                  <MediaLine post={e.post} label={e.label} />
-                ) : (
-                  <TruthSocialPost post={e.post} parsed={e.parsed} label={e.label} />
-                )}
+              <li key={e.key} className="post-timeline__item">
+                <TruthSocialPost post={e.post} parsed={e.parsed} label={e.label} />
               </li>
             ))}
           </ol>

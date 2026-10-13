@@ -96,6 +96,8 @@ export async function GET(request: Request) {
           why_it_matters: item.why_it_matters,
           sentiment: item.sentiment,
           entities: item.entities,
+          media: item.media ?? null,
+          media_description: item.media_description ?? null,
         })) || [];
 
       return NextResponse.json(
@@ -143,6 +145,8 @@ export async function GET(request: Request) {
           why_it_matters: item.why_it_matters,
           sentiment: item.sentiment,
           entities: item.entities,
+          media: item.media ?? null,
+          media_description: item.media_description ?? null,
         })) || [];
 
       // Combine and sort by timestamp
