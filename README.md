@@ -4,6 +4,8 @@ Live tracker of the US President's public activity: a combined feed of Truth Soc
 
 **Live:** https://www.kadoa.com/potus
 
+[![Today page: the President's location, next event, Truth Social posts and White House news](docs/screenshot.png)](https://www.kadoa.com/potus)
+
 ## Run locally
 
 ```bash
