@@ -152,7 +152,7 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
 // Two GOV.UK selects side by side, as the UKHSA dashboard filters its charts. They replace a segmented button row and
 // a small select that used two different control styles for the same job.
 const FilterBar = ({ signal, setSignal, category, setCategory }) => (
-  <div className="flex flex-wrap gap-x-8 mb-4">
+  <div className="dk-filter-bar">
     <FilterSelect label="Impact" value={signal} options={IMPACT_FILTERS.map((f) => [f.value, f.value ? f.label : "All posts"])} onChange={setSignal} />
     <FilterSelect
       label="Topic"
