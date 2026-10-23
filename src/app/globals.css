@@ -4,8 +4,7 @@
    wires the app shell (fonts, card frames, scroll areas) to those tokens. */
 
 :root {
-  /* @fontsource-variable/inter registers "Inter Variable" */
-  --dk-font: "Inter Variable", "Inter", arial, sans-serif;
+  --dk-font: "Atkinson Hyperlegible", arial, sans-serif;
 }
 
 body {
