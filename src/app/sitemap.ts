@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/whitehouse`, lastModified, changeFrequency: "hourly", priority: 0.8 },
     { url: `${BASE}/insights`, lastModified, changeFrequency: "weekly", priority: 0.6 },
     { url: `${BASE}/insights/travel-map`, lastModified, changeFrequency: "daily", priority: 0.8 },
+    { url: `${BASE}/insights/trump-trades`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/about`, lastModified, changeFrequency: "monthly", priority: 0.5 },
   ];
 }

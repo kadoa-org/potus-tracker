@@ -4,7 +4,7 @@ import { INSIGHTS } from "@/lib/insights";
 
 const URL = "https://www.kadoa.com/potus/insights";
 const TITLE = "Insights | POTUS Tracker";
-const DESCRIPTION = "Analysis built on President Trump's public schedule: where he traveled and slept over the past year.";
+const DESCRIPTION = "Analysis built on President Trump's public schedule, posts and financial disclosures.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -20,7 +20,7 @@ export default function InsightsPage() {
     <main className="pb-16">
       <div className="title-block">
         <h1 className="dk-h1">Insights</h1>
-        <p className="lede">Analysis built on the President&apos;s public schedule. Each one has its own page to link to.</p>
+        <p className="lede">Analysis built on the President&apos;s public schedule, posts and financial disclosures. Each one has its own page to link to.</p>
       </div>
       <ul className="insight-cards">
         {INSIGHTS.map((i) => (
