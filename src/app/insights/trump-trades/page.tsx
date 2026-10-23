@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CsvDownload } from "@/components/CsvDownload";
 import { ChanceRows, MonthlyTrades, PostTimeline } from "@/components/TradeCharts";
 import { ChartCard, DataTable, SectionHeading } from "@/kit";
@@ -10,6 +9,10 @@ import data from "@/data/trump-trades.json";
 // the week before his posts about a company against the same posts moved to random dates.
 const insight = insightBySlug("trump-trades")!;
 const URL = "https://www.kadoa.com/potus/insights/trump-trades";
+const OGE = "https://www.oge.gov/Web/OGE.nsf/Officials%20Individual%20Disclosures%20Search%20Collection?OpenForm";
+const HOUSE = "https://disclosures-clerk.house.gov/FinancialDisclosure";
+const SENATE = "https://efdsearch.senate.gov/search/";
+const TRUTH = "https://www.trumpstruth.org/";
 
 export const metadata: Metadata = {
   title: insight.seoTitle,
@@ -35,7 +38,6 @@ export default function TrumpTradesPage() {
   const ahead = totals.trump - totals.congress;
   return (
     <main className="pb-16">
-      <Breadcrumbs items={[{ label: "Insights", href: "/insights" }, { label: insight.title }]} />
       <div className="title-block">
         <h1 className="dk-h1">{insight.title}</h1>
         <p className="lede">
@@ -83,10 +85,8 @@ export default function TrumpTradesPage() {
         ]}
         footer={
           <p>
-            Source: Trump&apos;s OGE financial disclosures (2026 annual report and periodic transaction reports); House and Senate periodic
-            transaction reports, with amended filings counted once. Reported values: ${(totals.trumpLo / 1e9).toFixed(1)}B to $
-            {(totals.trumpHi / 1e9).toFixed(1)}B for Trump&apos;s accounts, ${(totals.congressLo / 1e9).toFixed(1)}B to $
-            {(totals.congressHi / 1e9).toFixed(1)}B for Congress.
+            Source: <a className="dk-link" href={OGE}>Trump&apos;s OGE financial disclosures</a>; <a className="dk-link" href={HOUSE}>House</a> and <a className="dk-link" href={SENATE}>Senate</a> periodic
+            transaction reports.
           </p>
         }
       />
@@ -132,15 +132,23 @@ export default function TrumpTradesPage() {
         ]}
         footer={
           <p>
-            Random dates: each post moved to a random day between January 2025 and August 2026, 1,000 times; the range covers the middle 90% of
-            runs. Media companies, such as Comcast and Disney, are excluded.
+            Source: <a className="dk-link" href={TRUTH}>trumpstruth.org</a> archive of Truth Social posts; <a className="dk-link" href={OGE}>Trump&apos;s OGE financial disclosures</a>.
           </p>
         }
       />
 
       </div>
       <div className="nights-card">
-        <ChartCard id="examples-title" title="Some posts came days after a trade in the same stock" description="A few that look timed. Across all posts, they are no more common than chance.">
+        <ChartCard
+          id="examples-title"
+          title="Some posts came days after a trade in the same stock"
+          description="A few that look timed. Across all posts, they are no more common than chance."
+          footer={
+            <p>
+              Source: <a className="dk-link" href={TRUTH}>trumpstruth.org</a> archive of Truth Social posts; <a className="dk-link" href={OGE}>Trump&apos;s OGE financial disclosures</a>.
+            </p>
+          }
+        >
           <PostTimeline examples={examples} />
         </ChartCard>
       </div>
@@ -154,6 +162,13 @@ export default function TrumpTradesPage() {
             ranges, not exact amounts.
           </li>
           <li>
+            Congress trades come from House and Senate periodic transaction reports, with amended filings counted once.
+          </li>
+          <li>
+            Reported values: ${(totals.trumpLo / 1e9).toFixed(1)}B to ${(totals.trumpHi / 1e9).toFixed(1)}B for Trump&apos;s accounts, $
+            {(totals.congressLo / 1e9).toFixed(1)}B to ${(totals.congressHi / 1e9).toFixed(1)}B for Congress.
+          </li>
+          <li>
             The White House says outside managers run the accounts. The filings do not say who chose each trade, and most are small orders
             spread across hundreds of stocks on the same day.
           </li>
@@ -164,6 +179,10 @@ export default function TrumpTradesPage() {
           <li>
             A purchase counts for a post praising a company, and a sale for a post attacking one, when it falls 1 to 7 days before the post, in
             Eastern time.
+          </li>
+          <li>
+            Random dates: each post moved to a random day between January 2025 and August 2026, 1,000 times; the range covers the middle 90% of
+            runs. Media companies, such as Comcast and Disney, are excluded.
           </li>
         </ul>
       </section>

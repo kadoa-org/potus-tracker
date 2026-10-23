@@ -266,3 +266,6 @@ main {
 .insight-card__title a { color: var(--dk-link); text-decoration: underline; text-underline-offset: 0.15em; }
 .insight-card__desc { margin: 0 0 16px; font-size: 16px; line-height: 1.5; }
 .nights-card { --dk-tab-min-height: 0px; --dk-tab-min-height-sm: 0px; }
+/* The Schedule page's location card: the globe fills its panel edge to edge, and no panel shows without a map. */
+.location-card .dk-card__panel { position: relative; padding: 0; }
+.location-card .dk-card__panel:empty { display: none; }

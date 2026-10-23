@@ -8,7 +8,7 @@ import { apiUrl } from "../lib/basePath";
 import { hasMapCoordinates } from "../lib/location";
 import { eventTimeLabel, inDayOrder } from "../lib/schedule";
 import { addDays as addDay, etClock, latestTrip, nextStop } from "../lib/travel";
-import { SectionHeading } from "../kit";
+import { ChartCard, SectionHeading } from "../kit";
 import { FetchStatus } from "./FetchStatus.jsx";
 import { ScheduleTimeline } from "./ScheduleTimeline.jsx";
 
@@ -205,28 +205,36 @@ export function Schedule({ initial }) {
       {!locationError && location && (
         <>
           {/* One card answers "where is he": the place in the title, when it was last updated, then the map. A
-              separate headline row repeated the same two facts. */}
-          <section className="dk-card">
-            <SectionHeading
+              separate headline row repeated the same two facts. The map fills its panel edge to edge (globals.css). */}
+          <div className="location-card">
+            <ChartCard
+              id="location-title"
               title={`Current location: ${location.locationName || "Unknown"}`}
               description={canShowMap ? undefined : "No map: coordinates have not been provided for this location."}
               date={updatedLabel ? `Updated ${updatedLabel}` : undefined}
-            />
-            {canShowMap && (
-              <div className="dk-card__panel relative" style={{ padding: 0 }}>
-                {recentDone ? (
+              right={
+                <Link href="/insights/travel-map" className="dk-link text-[16px]">
+                  Travel history
+                </Link>
+              }
+              footer={
+                <p>
+                  Source: the President&apos;s public schedule from{" "}
+                  <a className="dk-link" href="https://rollcall.com/factbase/trump/topic/calendar/">
+                    Factbase
+                  </a>
+                  .
+                </p>
+              }
+            >
+              {canShowMap &&
+                (recentDone ? (
                   <TravelGlobe places={recent?.places ?? []} flights={recent?.flights ?? []} to={recent?.to} now={now} compact startZoom={3} trip={trip} next={next} />
                 ) : (
                   <MapSkeleton />
-                )}
-              </div>
-            )}
-            <p className="dk-card__footer text-right">
-              <Link href="/insights/travel-map" className="dk-link">
-                Travel history
-              </Link>
-            </p>
-          </section>
+                ))}
+            </ChartCard>
+          </div>
         </>
       )}
       {!locationLoading && !locationError && !location && <div className="dk-hint">No location data available</div>}

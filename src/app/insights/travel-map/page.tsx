@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CsvDownload } from "@/components/CsvDownload";
 import { TravelGlobe } from "@/components/TravelGlobe";
-import { ChartCard, DataTable } from "@/kit";
+import { ChartCard, DataTable, SectionHeading } from "@/kit";
 import { insightBySlug } from "@/lib/insights";
 import { NightsGrid } from "@/components/NightsGrid";
 import { CATEGORIES, km, nightsByCategory, placeHistory } from "@/lib/travel";
@@ -14,6 +13,7 @@ export const revalidate = 21600;
 
 const insight = insightBySlug("travel-map")!;
 const URL = "https://www.kadoa.com/potus/insights/travel-map";
+const FACTBASE = "https://rollcall.com/factbase/trump/topic/calendar/";
 
 export const metadata: Metadata = {
   title: insight.seoTitle,
@@ -31,8 +31,8 @@ type Place = { id: number; label: string; name: string; category: string; nights
 type Key = keyof typeof COLORS;
 type Flight = { key: string; date: string; from: string; to: string; miles: number };
 
-// One insight on its own page, laid out like the sibling sites: breadcrumbs, title and lede, then a chart card each for
-// his flights and his nights, with Chart, Tabular data and Download tabs and a source note.
+// One insight on its own page, laid out like the sibling sites: title and lede, a chart card each for his flights and
+// his nights, with Chart, Tabular data and Download tabs and a source line, then "About the data".
 export default async function TravelMapPage() {
   const [travel, now] = await Promise.all([loadTravel(), loadCurrentLocation().catch(() => null)]);
   const history = placeHistory(travel);
@@ -57,7 +57,6 @@ export default async function TravelMapPage() {
 
   return (
     <main className="pb-16">
-      <Breadcrumbs items={[{ label: "Insights", href: "/insights" }, { label: insight.title }]} />
       <div className="title-block">
         <h1 className="dk-h1">{insight.title}</h1>
         <p className="lede">
@@ -109,8 +108,7 @@ export default async function TravelMapPage() {
         ]}
         footer={
           <p>
-            Source: the President&apos;s public schedule, geocoded. A flight is a move of more than 80 km between two arrivals; lines join the stops,
-            not actual flight paths.
+            Source: the President&apos;s public schedule from <a className="dk-link" href={FACTBASE}>Factbase</a>.
           </p>
         }
       />
@@ -126,8 +124,7 @@ export default async function TravelMapPage() {
             label: "Chart",
             content: (
               <>
-                <NightsGrid travel={travel} />
-                <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
+                <ul className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
                   {shown.map((c) => (
                     <li key={c.key} className="flex items-center gap-2">
                       <i className="block h-4 w-4 rounded-[2px]" style={{ background: COLORS[c.key as Key].cell }} />
@@ -135,6 +132,7 @@ export default async function TravelMapPage() {
                     </li>
                   ))}
                 </ul>
+                <NightsGrid travel={travel} />
               </>
             ),
           },
@@ -168,11 +166,26 @@ export default async function TravelMapPage() {
         ]}
         footer={
           <p>
-            Source: the President&apos;s public schedule, geocoded. A night is the last place on each day&apos;s schedule, in Eastern time.
+            Source: the President&apos;s public schedule from <a className="dk-link" href={FACTBASE}>Factbase</a>.
           </p>
         }
       />
       </div>
+
+      <section className="mt-10 max-w-[48rem]">
+        <SectionHeading title="About the data" />
+        <ul className="list-disc space-y-3 pl-5 text-[17px] leading-relaxed">
+          <li>
+            Places come from the President&apos;s public schedule, collected from Factbase and geocoded. Stops within 80 km count as one place,
+            so Joint Base Andrews is Washington.
+          </li>
+          <li>A flight is a move of more than 80 km between two arrivals. Lines join the stops, not actual flight paths.</li>
+          <li>
+            A night is the last place on each day&apos;s schedule, in Eastern time, carried forward over days with no events. The map and the
+            calendar cover the last 365 nights.
+          </li>
+        </ul>
+      </section>
     </main>
   );
 }
