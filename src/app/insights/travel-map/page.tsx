@@ -59,7 +59,7 @@ export default async function TravelMapPage() {
   const owned = byCategory.maralago + byCategory.bedminster + byCategory.property;
 
   return (
-    <main className="pb-16">
+    <main>
       <div className="title-block">
         <h1 className="dk-h1">{insight.title}</h1>
         <p className="lede">
@@ -127,7 +127,7 @@ export default async function TravelMapPage() {
             label: "Chart",
             content: (
               <>
-                <ul className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
+                <ul className="mb-3 flex flex-wrap gap-x-6 gap-y-2 text-[16px]">
                   {shown.map((c) => (
                     <li key={c.key} className="flex items-center gap-2">
                       <i className="block h-4 w-4 rounded-[2px]" style={{ background: COLORS[c.key as Key].cell }} />
@@ -175,9 +175,9 @@ export default async function TravelMapPage() {
       />
       </div>
 
-      <section className="mt-10 max-w-[48rem]">
+      <section className="insight-notes">
         <SectionHeading title="About the data" />
-        <ul className="list-disc space-y-3 pl-5 text-[17px] leading-relaxed">
+        <ul>
           <li>
             Places come from the President&apos;s public schedule, collected from Factbase and geocoded. Stops within 80 km count as one place,
             so Joint Base Andrews is Washington.

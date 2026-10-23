@@ -14,8 +14,8 @@ export function MonthlyTrades({ months, totals }) {
         <span className="flex items-center gap-2"><i className="block h-4 w-4 rounded-[2px]" style={{ background: C.trump }} />Trump&apos;s accounts <b>{totals.trump.toLocaleString("en-US")}</b></span>
         <span className="flex items-center gap-2"><i className="block h-4 w-4 rounded-[2px]" style={{ background: C.congress }} />Congress <b>{totals.congress.toLocaleString("en-US")}</b></span>
       </div>
-      <div className="hidden sm:block"><Bars months={months} W={760} H={300} ticks={/(01|07)$/} /></div>
-      <div className="sm:hidden"><Bars months={months} W={360} H={240} ticks={/01$/} /></div>
+      <div className="hidden sm:block"><Bars months={months} W={860} H={320} ticks={/(01|07)$/} /></div>
+      <div className="sm:hidden"><Bars months={months} W={300} H={220} ticks={/01$/} /></div>
     </figure>
   );
 }
@@ -29,7 +29,7 @@ function Bars({ months, W, H, ticks }) {
         {[0, 1000, 2000, 3000].map((v) => (
           <g key={v}>
             <line x1={0} x2={W} y1={y(v)} y2={y(v)} stroke="rgba(0,0,0,.08)" />
-            <text x={0} y={y(v) - 5} fontSize={13} fill={C.muted}>{v.toLocaleString("en-US")}</text>
+            <text x={0} y={y(v) - 5} fontSize={14} fill={C.muted}>{v.toLocaleString("en-US")}</text>
           </g>
         ))}
         {months.map((m, i) => {
@@ -42,7 +42,7 @@ function Bars({ months, W, H, ticks }) {
               <rect x={cx + 1} y={y(m.congress)} width={bw} height={y(0) - y(m.congress)} rx={1.5} fill={C.congress}>
                 <title>{`${monthLabel(m.month)}: Trump's accounts ${m.trump.toLocaleString("en-US")}, Congress ${m.congress.toLocaleString("en-US")}${last ? " (incomplete)" : ""}`}</title>
               </rect>
-              {ticks.test(m.month) && <text x={cx} y={H - 8} fontSize={13} fill={C.muted} textAnchor="middle">{monthLabel(m.month)}</text>}
+              {ticks.test(m.month) && <text x={cx} y={H - 8} fontSize={14} fill={C.muted} textAnchor="middle">{monthLabel(m.month)}</text>}
             </g>
           );
         })}
@@ -63,15 +63,15 @@ export function ChanceRows({ chance }) {
         const x = (v) => 4 + ((v - r.lo) / (r.hi - r.lo)) * 92;
         return (
           <div key={label} className="grid items-center gap-x-6 gap-y-2 sm:grid-cols-[340px_minmax(0,1fr)_110px]">
-            <div className="text-[17px] font-semibold">{label}</div>
+            <div className="text-[19px] font-semibold">{label}</div>
             <div>
               <div className="relative h-9 rounded-md bg-[#e9eaeb]">
                 <span className="absolute top-0 h-full border-l-2 border-dashed border-[#505a5f]" style={{ left: `${x(r.median)}%` }} />
                 <span className="absolute -top-1 h-11 w-[6px] -translate-x-1/2 rounded-sm" style={{ left: `${x(r.real)}%`, background: color }} />
               </div>
-              <div className="mt-1 text-[15px] text-[#505a5f]">Random dates: {r.lo} to {r.hi}, typically {r.median}</div>
+              <div className="mt-1 text-[16px] text-[#505a5f]">Random dates: {r.lo} to {r.hi}, typically {r.median}</div>
             </div>
-            <div className="text-[20px] font-bold" style={{ color: text }}>{r.real} of {r.n}</div>
+            <div className="text-[24px] font-bold" style={{ color: text }}>{r.real} of {r.n}</div>
           </div>
         );
       })}
@@ -101,7 +101,7 @@ export function PostTimeline({ examples }) {
       <div className="grid gap-x-6 sm:grid-cols-[150px_300px_1fr]">
         <div className="hidden sm:block" />
         <div>
-          <div className="text-[15px] text-[#505a5f]">Days before the post</div>
+          <div className="text-[16px] text-[#505a5f]">Days before the post</div>
           <svg width={W} height={20} style={{ overflow: "visible" }}>
             {[-7, -6, -5, -4, -3, -2, -1].map((d) => <text key={d} x={tx(d)} y={15} fontSize={14} fill={C.muted} textAnchor="middle">{-d}</text>)}
             <text x={tx(0)} y={15} fontSize={14} fontWeight={600} fill={C.ink} textAnchor="middle">Post</text>
@@ -111,8 +111,8 @@ export function PostTimeline({ examples }) {
       {examples.map((e) => (
         <div key={e.company + e.date} className="grid items-center gap-x-6 gap-y-1 border-t border-[#e6e6e6] py-2 sm:grid-cols-[150px_300px_1fr]">
           <div>
-            <div className="text-[17px] font-semibold">{e.company}</div>
-            <div className="text-[15px] text-[#505a5f]">{day(e.date)}</div>
+            <div className="text-[19px] font-semibold">{e.company}</div>
+            <div className="text-[16px] text-[#505a5f]">{day(e.date)}</div>
           </div>
           <svg width={W} height={H} className="max-w-full" role="img" aria-label={`${e.company}: purchases ${e.buys.map((d) => -d).join(", ") || "none"} and sales ${e.sales.map((d) => -d).join(", ") || "none"} days before the post`}>
             <line x1={tx(-7) - 8} x2={tx(0)} y1={mid} y2={mid} stroke="#c9cdd1" strokeWidth={1.5} />
@@ -121,7 +121,7 @@ export function PostTimeline({ examples }) {
             {e.buys.map((d) => <Tri key={`b${d}`} x={tx(d) - (e.sales.includes(d) ? 7 : 0)} y={mid - 2} up color={C.buy} />)}
             {e.sales.map((d) => <Tri key={`s${d}`} x={tx(d) + (e.buys.includes(d) ? 7 : 0)} y={mid + 2} color={C.sale} />)}
           </svg>
-          <div className="text-[17px]">
+          <div className="text-[19px]">
             {e.url ? <a href={e.url} className="text-inherit no-underline hover:underline">&ldquo;{quote(e)}&rdquo;</a> : <>&ldquo;{quote(e)}&rdquo;</>}
           </div>
         </div>

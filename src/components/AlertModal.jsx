@@ -69,7 +69,7 @@ export function AlertModal() {
         <div className="p-4 md:p-5">
           <div className="space-y-6">
             <div>
-              <label className="block text-[13px] font-semibold mb-2">What would you like to be alerted about?</label>
+              <label className="block text-[16px] font-semibold mb-2">What would you like to be alerted about?</label>
               <textarea
                 rows={3}
                 className="dk-textarea"

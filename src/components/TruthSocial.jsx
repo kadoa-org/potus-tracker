@@ -243,9 +243,9 @@ export function TruthSocial({ initial, postId }) {
 
   return (
     <main>
-      <div className="mb-8">
+      <div className="mb-10">
         <h1 className="dk-h1">Trump&apos;s Truth Social Posts</h1>
-        <p className="text-[19px] text-[#505a5f] m-0">Every post, with an AI summary of why it matters and its likely impact.</p>
+        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">Every post, with an AI summary of why it matters and its likely impact.</p>
       </div>
       {pinned && (
         <div className="mb-10 max-w-[760px]">

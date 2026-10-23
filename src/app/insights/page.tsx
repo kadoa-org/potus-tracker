@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // The index of insight pages, one card each, in the layout of the Congress Trading Monitor and Energy Price Monitor.
 export default function InsightsPage() {
   return (
-    <main className="pb-16">
+    <main>
       <div className="title-block">
         <h1 className="dk-h1">Insights</h1>
         <p className="lede">Analysis built on the President&apos;s public schedule, posts and financial disclosures. Each one has its own page to link to.</p>

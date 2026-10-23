@@ -140,9 +140,9 @@ export function Feed({ initial }) {
 
   return (
     <main>
-      <div className="mb-8">
+      <div className="mb-10">
         <h1 className="dk-h1">White House News Today</h1>
-        <p className="text-[19px] text-[#505a5f] m-0">Official releases, newest first. Each summary is written by AI and links to the full release.</p>
+        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">Official releases, newest first. Each summary is written by AI and links to the full release.</p>
       </div>
       <div id="feedContent">
         {data.length === 0 ? (

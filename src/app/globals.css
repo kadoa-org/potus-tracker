@@ -9,17 +9,32 @@
 
 body {
   font-family: var(--dk-font);
-  font-size: 15px;
+  font-size: 19px;
+  line-height: 1.4;
   color: var(--dk-ink);
+  background: #fff;
   @apply antialiased scroll-smooth;
 }
+
+/* GOV.UK headings for any heading without its own class. In the base layer, so a utility class still wins. */
+@layer base {
+  h1 { font-size: 36px; line-height: 1.12; margin-bottom: 20px; }
+  h2 { font-size: 24px; line-height: 1.25; margin-bottom: 20px; }
+  h3 { font-size: 19px; line-height: 1.3; margin-bottom: 15px; }
+  @media (max-width: 640px) { h1 { font-size: 27px; } }
+}
+
+/* Page body: GOV.UK spacing, 40px above the title and 60px before the footer (25px and 40px on phones). */
+/* Doubled class: the kit's .dk-container sets padding with a shorthand, and the bundle can load it after this file. */
+.dk-container.page-main { padding-top: 40px; padding-bottom: 60px; }
+@media (max-width: 640px) { .dk-container.page-main { padding-top: 25px; padding-bottom: 40px; } }
 
 .error {
   color: var(--dk-red);
 }
 
 .status-message {
-  @apply fixed top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 text-xs font-semibold;
+  @apply fixed top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 text-base font-semibold;
   background: var(--dk-ink);
   color: #fff;
 }
@@ -29,7 +44,7 @@ body {
 }
 
 pre {
-  @apply break-words font-mono text-xs;
+  @apply break-words font-mono text-base;
 }
 
 hr {
@@ -64,7 +79,7 @@ main {
   border: 1px solid var(--dk-ink);
   background: var(--dk-bg);
   padding: 6px 9px;
-  font: 400 15px/1.45 var(--dk-font);
+  font: 400 16px/1.45 var(--dk-font);
   color: var(--dk-ink);
   resize: none;
 }
@@ -191,30 +206,29 @@ main {
 .text-button { appearance: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Truth Social posts (TruthSocial.jsx): the DWP timeline (a 3px brand-blue rule with an 11px tick per item), each item
-   a GOV.UK summary card (1px border, a light grey title bar with a bold title, white content). Sizes follow the data
-   kit's compact scale shared by the sibling sites rather than GOV.UK's 19px service scale, which read too large for a
-   feed: 16px bold titles, 15px text at 1.5, 13px for the date, metadata and captions in secondary grey. The column is
-   capped near 80 characters a line. No shadow: a card is not a link, and a shadow would make it look like one. */
+   a GOV.UK summary card (1px border, a light grey title bar with a bold title, white content). Sizes are GOV.UK's
+   body-s, one step under the 19px body, which reads too large for a feed: 16px bold titles and 16px text, with the
+   date, metadata and captions in secondary grey. The column is capped near 80 characters a line. No shadow: a card is not a link, and a shadow would make it look like one. */
 .post-timeline { list-style: none; margin: 0; padding: 0; max-width: 720px; border-left: 3px solid #1d70b8; }
 .post-timeline__item { position: relative; padding: 0 0 24px 18px; }
 .post-timeline__item::before { content: ""; position: absolute; top: 8px; left: 0; width: 11px; border-top: 3px solid #1d70b8; }
 .post-timeline__item:last-child { padding-bottom: 4px; }
-.post-timeline__when { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 8px; font-size: 13px; line-height: 20px; color: var(--dk-gov-secondary); }
+.post-timeline__when { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 8px; font-size: 16px; line-height: 24px; color: var(--dk-gov-secondary); }
 .post-timeline__when strong { color: var(--dk-ink); }
-.post-timeline__when .gov-tag { padding: 0 6px 1px; font-size: 13px; line-height: 18px; }
+.post-timeline__when .gov-tag { padding: 0 6px 1px; font-size: 16px; line-height: 22px; }
 .post-card { border: 1px solid var(--dk-rule); background: var(--dk-bg); }
 .post-card--pinned { border-left: 5px solid var(--dk-link); }
 .post-card__title-wrapper { padding: 10px 16px; background: #f3f3f3; }
 .post-card__title { margin: 0; font-size: 16px; font-weight: 700; line-height: 22px; color: var(--dk-ink); }
 .post-card__content { padding: 12px 16px; }
-.post-card__text { margin: 0 0 12px; font-size: 15px; line-height: 22px; }
-.post-card__text .gov-button-secondary { margin-top: 10px; font-size: 14px; }
-.post-card__media-text { margin: 0 0 12px; font-size: 13px; line-height: 18px; color: var(--dk-gov-secondary); }
-.post-card__media-text--main { font-size: 15px; line-height: 22px; color: var(--dk-ink); }
-.post-card__footer { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; font-size: 13px; line-height: 18px; color: var(--dk-gov-secondary); }
+.post-card__text { margin: 0 0 12px; font-size: 16px; line-height: 24px; }
+.post-card__text .gov-button-secondary { margin-top: 10px; font-size: 16px; }
+.post-card__media-text { margin: 0 0 12px; font-size: 16px; line-height: 22px; color: var(--dk-gov-secondary); }
+.post-card__media-text--main { font-size: 16px; line-height: 24px; color: var(--dk-ink); }
+.post-card__footer { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; font-size: 16px; line-height: 22px; color: var(--dk-gov-secondary); }
 .post-card__props { margin: 0; }
 .post-card__source { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; white-space: nowrap; }
-.post-card__source svg { width: 13px; height: 13px; }
+.post-card__source svg { width: 16px; height: 16px; }
 @media (max-width: 40.0525em) {
   .post-timeline__item { padding-left: 14px; }
   .post-card__title-wrapper, .post-card__content { padding: 10px 12px; }
@@ -238,16 +252,16 @@ main {
 .doc-list__title { margin: 0 0 5px; font-size: 19px; font-weight: 700; line-height: 1.3; }
 .doc-list__title .dk-link { color: var(--dk-link); text-decoration: underline; text-underline-offset: 0.15em; }
 .doc-list__desc { margin: 0 0 5px; font-size: 16px; line-height: 1.5; max-width: 75ch; }
-.doc-list__meta { margin: 0; font-size: 14px; color: var(--dk-gov-secondary); }
+.doc-list__meta { margin: 0; font-size: 16px; color: var(--dk-gov-secondary); }
 
 /* Compact timeline for the dashboard's half-width columns. The DWP sizes (19px bold headings) are set for a
    full-width page; in a column, every AI summary turned into three lines of heavy bold. One step down the GOV.UK
-   scale: 16px bold headings, 14px grey date and by-line, and less space between items. */
+   scale: 16px bold headings, 16px grey date and by-line, and less space between items. */
 .dwp-timeline--compact .dwp-timeline__item { margin: 10px 0; padding-bottom: 10px; }
-.dwp-timeline--compact .dwp-timeline__datetime { font-size: 14px; color: var(--dk-gov-secondary); margin-bottom: 3px; }
+.dwp-timeline--compact .dwp-timeline__datetime { font-size: 16px; color: var(--dk-gov-secondary); margin-bottom: 3px; }
 .dwp-timeline--compact .dwp-timeline__heading { font-size: 16px; line-height: 1.35; margin-bottom: 3px; }
-.dwp-timeline--compact .dwp-timeline__by-line { font-size: 14px; color: var(--dk-gov-secondary); margin: 0 0 4px; }
-.dwp-timeline--compact .dwp-timeline__link { font-size: 14px; }
+.dwp-timeline--compact .dwp-timeline__by-line { font-size: 16px; color: var(--dk-gov-secondary); margin: 0 0 4px; }
+.dwp-timeline--compact .dwp-timeline__link { font-size: 16px; }
 
 
 /* Insights, as on the Congress Trading Monitor and Energy Price Monitor: GOV.UK breadcrumbs, a title block, and
@@ -257,8 +271,8 @@ main {
 .govuk-breadcrumbs__list-item { display: inline-flex; align-items: center; }
 .govuk-breadcrumbs__list-item + .govuk-breadcrumbs__list-item::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 10px 0 8px; border: solid var(--dk-muted); border-width: 1px 1px 0 0; transform: rotate(45deg); }
 .govuk-breadcrumbs__link { color: var(--dk-ink); text-decoration: underline; text-underline-offset: 0.15em; }
-.title-block { margin-bottom: 28px; }
-.lede { margin: 0; font-size: 19px; line-height: 1.5; color: var(--dk-muted); max-width: 48rem; }
+.title-block { margin-bottom: 40px; }
+.lede { margin: 0; font-size: 19px; line-height: 1.45; color: var(--dk-muted); max-width: 640px; }
 .insight-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
 .insight-card { background: #f3f2f1; padding: 20px 20px 4px; border-top: 4px solid #1d70b8; }
 .insight-card__title { font-size: 24px; line-height: 1.25; font-weight: 700; margin: 0 0 12px; }
@@ -268,3 +282,10 @@ main {
 /* The Schedule page's location card: the globe fills its panel edge to edge, and no panel shows without a map. */
 .location-card .dk-card__panel { position: relative; padding: 0; }
 .location-card .dk-card__panel:empty { display: none; }
+
+/* About the data under an insight: 60px above, 15px between notes, a 640px reading column. */
+.insight-notes { margin: 60px 0 0; max-width: 640px; }
+.insight-notes ul { margin: 0; padding-left: 20px; list-style: disc; font-size: 19px; line-height: 1.45; }
+.insight-notes li { margin: 0 0 15px; }
+/* The page is a flex column, so margins do not collapse: after a chart card, its own 60px bottom margin is the gap. */
+:is(.dk-card, .nights-card) + .insight-notes { margin-top: 0; }

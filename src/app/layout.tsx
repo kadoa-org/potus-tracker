@@ -91,7 +91,7 @@ export default function RootLayout({
                 would otherwise shrink to content width (narrow pages like the
                 schedule collapsed to ~877px). width:100% pins it to the
                 full page width on every page. */}
-            <div className="dk-container w-full" style={{ paddingTop: 30, paddingBottom: 16 }}>{children}</div>
+            <div className="dk-container page-main w-full">{children}</div>
           </div>
           <SiteFooter current="potus" />
         </div>

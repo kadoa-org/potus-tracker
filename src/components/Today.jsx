@@ -146,8 +146,8 @@ export function Today({ initial }) {
 
   return (
     <main className="potus-today">
-      <div className="mb-8">
-        <p className="flex items-center gap-2 text-[14px] m-0 mb-2">
+      <div className="mb-10">
+        <p className="flex items-center gap-2 text-[16px] m-0 mb-2">
           <span className="inline-flex items-center gap-1.5 font-semibold" style={{ color: "var(--dk-green)" }}>
             <span className="dk-live-dot" aria-hidden="true" />
             Live
@@ -161,7 +161,7 @@ export function Today({ initial }) {
         <h1 className="dk-h1">POTUS Tracker</h1>
         {/* The live answer to "where is Trump today" sits right under the title, where the old sentence-style h1
             put it, so the page still answers the query in its opening text. */}
-        <p className="text-[19px] text-[#505a5f] m-0">
+        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">
           {context ?? "Where President Trump is, his public schedule and what he posts, updated live."}
         </p>
       </div>
@@ -248,7 +248,7 @@ export function Today({ initial }) {
             <>
               <ScheduleTimeline events={inDayOrder(scheduleView.events)} compact />
               {scheduleView.hidden > 0 && (
-                <p className="mt-3 text-[14px]">
+                <p className="mt-3 text-[16px]">
                   <Link href="/schedule" className="dk-link">
                     {scheduleView.hidden} more events today
                   </Link>

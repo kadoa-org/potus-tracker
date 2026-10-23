@@ -17,7 +17,7 @@ const sphere = { type: "Sphere" };
 const INK = "#0b0c0c";
 const SECONDARY = "#505a5f";
 const OWNED = new Set(["washington", "maralago", "bedminster", "property"]);
-const CONTROL = "flex h-[30px] w-[30px] items-center justify-center text-[18px] leading-none text-[#0b0c0c] hover:bg-[#f3f2f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#ffdd00]";
+const CONTROL = "flex h-[30px] w-[30px] items-center justify-center text-[19px] leading-none text-[#0b0c0c] hover:bg-[#f3f2f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#ffdd00]";
 const NOW_RED = "#d4351c";
 // Pale blue sea and warm off-white land with a thin coastline, the usual contrast of news and flight globes.
 const SEA = "#dce8f2";
@@ -369,7 +369,7 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         ctx.fillStyle = NOW_RED;
         ctx.fillText(text, left, top);
         if (nextIsNear()) {
-          ctx.font = `700 13px ${font}`;
+          ctx.font = `700 14px ${font}`;
           const line = `Next: ${upcoming.text}`;
           const lw = ctx.measureText(line).width;
           const lx = Math.max(4, Math.min(width - 4 - lw, left));
@@ -381,7 +381,7 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
       }
       if (upcoming && visible(upcoming) && !nextIsNear()) {
         const [x, y] = projection([upcoming.lon, upcoming.lat]);
-        ctx.font = `700 13px ${font}`;
+        ctx.font = `700 14px ${font}`;
         const text = `Next: ${upcoming.text}`;
         const w = ctx.measureText(text).width, h = 16;
         // The dashed leg arrives from the Now dot, so the label prefers the side facing away from it.
@@ -410,8 +410,9 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         const sub = tripMode
           ? arrived.has(p.id) ? dayLabel(arrived.get(p.id)) : ""
           : main && !compact && p.category !== "washington" ? ` ${p.nights} night${p.nights === 1 ? "" : "s"}` : "";
-        const nameFont = `${main ? 700 : 600} ${main ? 14 : 12}px ${font}`;
-        const subFont = `400 ${main ? 14 : 12}px ${font}`;
+        // 14px, the chart-label size; the owned properties stand out by weight.
+        const nameFont = `${main ? 700 : 600} 14px ${font}`;
+        const subFont = `400 14px ${font}`;
         ctx.font = nameFont;
         const wName = ctx.measureText(name).width;
         ctx.font = subFont;
@@ -419,7 +420,7 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         // On the trip map the day sits under the name; elsewhere the nights follow it on one line.
         const stack = tripMode && sub;
         const w = stack ? Math.max(wName, wSub) : wName + wSub;
-        const h = stack ? 30 : main ? 16 : 14;
+        const h = stack ? 32 : 16;
         // On the trip map every route runs towards where he is now, so a stop's label goes on the side facing away.
         const away = tripMode && now && visible(now) && x < projection([now.lon, now.lat])[0];
         // Beside the dot first; on the trip map, centred above or below it when neither side has room.
@@ -433,7 +434,7 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         ctx.font = nameFont;
         ctx.strokeStyle = "rgba(248,248,248,0.9)";
         ctx.lineWidth = 3;
-        const nameY = stack ? ly - 7 : ly;
+        const nameY = stack ? ly - 8 : ly;
         ctx.strokeText(name, left, nameY);
         ctx.fillStyle = INK;
         ctx.fillText(name, left, nameY);
@@ -622,9 +623,9 @@ function PlaceCard({ place, x, y, offset, canvas, onClose }) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-bold text-[#0b0c0c]">{place.label}</div>
-          {place.name && place.name !== place.label && <div className="text-[13px] text-[#505a5f]">{place.name}</div>}
+          {place.name && place.name !== place.label && <div className="text-[14px] text-[#505a5f]">{place.name}</div>}
         </div>
-        <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-[18px] leading-none text-[#505a5f] hover:text-[#0b0c0c]">
+        <button type="button" onClick={onClose} aria-label="Close" className="px-1 text-[19px] leading-none text-[#505a5f] hover:text-[#0b0c0c]">
           ×
         </button>
       </div>
@@ -632,13 +633,13 @@ function PlaceCard({ place, x, y, offset, canvas, onClose }) {
         {place.nights > 0 ? `${place.nights} night${place.nights === 1 ? "" : "s"}` : "No nights"}
         {place.visits > 0 && <span className="font-normal text-[#505a5f]"> · {place.visits} flight{place.visits === 1 ? "" : "s"} in</span>}
       </div>
-      <ul className="mt-1 max-h-[240px] overflow-y-auto text-[13px] text-[#26282a]">
+      <ul className="mt-1 max-h-[240px] overflow-y-auto text-[14px] text-[#26282a]">
         {(all ? rows : rows.slice(0, MAX_ROWS)).map((r) => (
           <li key={r}>{r}</li>
         ))}
       </ul>
       {!all && rows.length > MAX_ROWS && (
-        <button type="button" onClick={() => setAll(true)} className="dk-link mt-1 text-[13px]">
+        <button type="button" onClick={() => setAll(true)} className="dk-link mt-1 text-[14px]">
           Show {rows.length - MAX_ROWS} more
         </button>
       )}

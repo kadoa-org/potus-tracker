@@ -40,7 +40,7 @@ export default function TrumpTradesPage() {
   const events = data.events as Event[];
   const ahead = totals.trump - totals.congress;
   return (
-    <main className="pb-16">
+    <main>
       <div className="title-block">
         <h1 className="dk-h1">{insight.title}</h1>
         <p className="lede">
@@ -156,9 +156,9 @@ export default function TrumpTradesPage() {
         </ChartCard>
       </div>
 
-      <section className="mt-10 max-w-[48rem]">
+      <section className="insight-notes">
         <SectionHeading title="About the data" />
-        <ul className="list-disc space-y-3 pl-5 text-[17px] leading-relaxed">
+        <ul>
           <li>
             Trades come from Trump&apos;s filings with the Office of Government Ethics: the 2026 annual report, which lists 2025 trades not
             reported earlier, and every periodic transaction report through August 2026. We count each reported trade. Filings give value
