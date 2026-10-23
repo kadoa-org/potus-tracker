@@ -19,6 +19,9 @@ const SECONDARY = "#505a5f";
 const OWNED = new Set(["washington", "maralago", "bedminster", "property"]);
 const CONTROL = "flex h-[30px] w-[30px] items-center justify-center text-[18px] leading-none text-[#0b0c0c] hover:bg-[#f3f2f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#ffdd00]";
 const NOW_RED = "#d4351c";
+// Pale blue sea and warm off-white land with a thin coastline, the usual contrast of news and flight globes.
+const SEA = "#dce8f2";
+const LAND = "#f7f5f0";
 const RECENT_BLUE = "#1d70b8";
 const RECENT_DAYS = 7;
 // On the trip map the trip already flown is grey and only what comes next is blue, so "Next" never reads as one of
@@ -149,18 +152,22 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
       ctx.clearRect(0, 0, width, height);
       ctx.beginPath();
       path(sphere);
-      ctx.fillStyle = "#f8f8f8";
+      ctx.fillStyle = SEA;
       ctx.fill();
       ctx.beginPath();
       path(graticule);
-      ctx.strokeStyle = "#e3e4e5";
-      ctx.lineWidth = 0.6;
+      ctx.strokeStyle = "#c9d8e5";
+      ctx.lineWidth = 0.5;
       ctx.stroke();
       if (compact && zoom > DETAIL_ZOOM && !detail) loadDetail();
       ctx.beginPath();
       path(compact && zoom > DETAIL_ZOOM && detail ? detail : land);
-      ctx.fillStyle = "#e1e2e3";
+      ctx.fillStyle = LAND;
       ctx.fill();
+      ctx.strokeStyle = "#9fb0bf";
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+      shadeEdge();
 
       ctx.globalCompositeOperation = "multiply";
       const k = radius / 300;
@@ -180,13 +187,14 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
         ctx.arc(x, y, r, 0, 2 * Math.PI);
         ctx.fill();
       }
+      // Arcs stay inside the globe's outline, so a bent leg near the rim never pokes out into the page.
+      ctx.save();
+      ctx.beginPath();
+      path(sphere);
+      ctx.clip();
       for (const leg of legs) {
         if (leg.recent) continue;
-        ctx.beginPath();
-        path({ type: "LineString", coordinates: [[leg.a.lon, leg.a.lat], [leg.b.lon, leg.b.lat]] });
-        ctx.strokeStyle = hexA(leg.color, leg.opacity);
-        ctx.lineWidth = leg.width;
-        ctx.stroke();
+        drawArc(leg);
       }
       ctx.globalCompositeOperation = "source-over";
       for (const leg of legs) {
@@ -195,12 +203,10 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
           drawTripLeg(leg);
           continue;
         }
-        ctx.beginPath();
-        path({ type: "LineString", coordinates: [[leg.a.lon, leg.a.lat], [leg.b.lon, leg.b.lat]] });
-        ctx.strokeStyle = hexA(leg.color, leg.opacity);
-        ctx.lineWidth = leg.width;
-        ctx.stroke();
+        drawArc(leg);
       }
+      ctx.restore(); // also brings back "multiply" from before the save
+      ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = INK;
       for (const p of seen) {
         if (!visible(p)) continue;
@@ -228,6 +234,52 @@ export function TravelGlobe({ places, flights, to, now = null, compact = false, 
       path(sphere);
       ctx.strokeStyle = "#b1b4b6";
       ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Light from the upper left and a darker rim, so the land and sea read as a sphere rather than a flat disc.
+    function shadeEdge() {
+      const [cx, cy] = projection.translate();
+      const r = radius * zoom;
+      if (r > Math.max(width, height) * 1.5) return; // zoomed in past the rim
+      const g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+      g.addColorStop(0, "rgba(255,255,255,0.18)");
+      g.addColorStop(0.7, "rgba(255,255,255,0)");
+      g.addColorStop(1, "rgba(16,42,67,0.13)");
+      ctx.beginPath();
+      path(sphere);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    // A flight as an arc: the great circle, bent to the right of the direction of travel by a share of its on-screen
+    // length, so short hops curve too and a return flight is a second arc beside the first. Only the part on the
+    // visible side of the globe is drawn.
+    function drawArc(leg) {
+      const along = geoInterpolate([leg.a.lon, leg.a.lat], [leg.b.lon, leg.b.lat]);
+      const centre = [-rotation[0], -rotation[1]];
+      const N = 32;
+      const raw = Array.from({ length: N + 1 }, (_, i) => {
+        const p = along(i / N);
+        return { xy: projection(p), vis: geoDistance(p, centre) < Math.PI / 2 };
+      });
+      if (!raw.some((r) => r.vis)) return;
+      const [x0, y0] = raw[0].xy, [x1, y1] = raw[N].xy;
+      const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+      const nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+      const bend = Math.min(45, len * 0.12);
+      ctx.beginPath();
+      let pen = false;
+      raw.forEach((r, i) => {
+        if (!r.vis) { pen = false; return; }
+        const k = Math.sin((Math.PI * i) / N) * bend;
+        const x = r.xy[0] + nx * k, y = r.xy[1] + ny * k;
+        if (pen) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        pen = true;
+      });
+      ctx.strokeStyle = hexA(leg.color, leg.opacity);
+      ctx.lineWidth = leg.width;
+      ctx.lineCap = "round";
       ctx.stroke();
     }
 
