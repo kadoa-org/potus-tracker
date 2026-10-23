@@ -15,12 +15,15 @@ const insight = insightBySlug("travel-map")!;
 const URL = "https://www.kadoa.com/potus/insights/travel-map";
 const FACTBASE = "https://rollcall.com/factbase/trump/topic/calendar/";
 
+// Made by scripts/og-insights.mjs (npm run og) and committed, since Vercel builds have no Chrome.
+const OG_IMAGE = { url: "https://www.kadoa.com/potus/og/travel-map.png", width: 1200, height: 630 };
+
 export const metadata: Metadata = {
   title: insight.seoTitle,
   description: insight.seoDescription,
   alternates: { canonical: URL },
-  openGraph: { url: URL, title: insight.seoTitle, description: insight.seoDescription },
-  twitter: { title: insight.seoTitle, description: insight.seoDescription },
+  openGraph: { url: URL, title: insight.seoTitle, description: insight.seoDescription, images: [OG_IMAGE] },
+  twitter: { card: "summary_large_image", title: insight.seoTitle, description: insight.seoDescription, images: [OG_IMAGE.url] },
 };
 
 const day = (date: string) =>
