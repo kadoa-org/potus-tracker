@@ -27,31 +27,41 @@ const singular = (c) => {
 };
 
 const External = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
   </svg>
 );
 
-// One release as a DWP timeline item: the date, the title, what kind of action it is, our AI summary, and the
-// link to the original so a reader can verify it. Releases carry a date only, so there is no time.
+// One release in the same timeline and card as a Truth Social post: the date and what kind of action it is on the tick,
+// the release's title in the card's grey bar, our AI summary as the body, and a footer link to the original so a reader
+// can verify it. Releases carry a date only, so there is no time.
 const FeedItem = ({ item }) => (
-  <li className="dwp-timeline__item">
-    <p className="dwp-timeline__datetime">{govDate(item.timestamp)}</p>
-    <h2 className="dwp-timeline__heading">{item.title}</h2>
-    <p className="dwp-timeline__by-line">
-      {singular(item.category)} from {getSourceName(item)}
+  <li className="post-timeline__item">
+    <p className="post-timeline__when">
+      {govDate(item.timestamp)}
+      <span className="gov-tag gov-tag--grey">{singular(item.category)}</span>
     </p>
-    <p className="dwp-timeline__content line-clamp-4">
-      <span className="dk-visually-hidden">AI summary: </span>
-      {item.summary}
-    </p>
-    {item.link && (
-      <a href={item.link} target="_blank" rel="noreferrer" className="dwp-timeline__link inline-flex items-center gap-1">
-        Read the full release
-        <span className="dk-visually-hidden"> of {item.title}</span>
-        <External />
-      </a>
-    )}
+    <article className="post-card" aria-labelledby={`release-${item.id}`}>
+      <div className="post-card__title-wrapper">
+        <h2 className="post-card__title" id={`release-${item.id}`}>{item.title}</h2>
+      </div>
+      <div className="post-card__content">
+        <p className="post-card__text line-clamp-4">
+          <span className="dk-visually-hidden">AI summary: </span>
+          {item.summary}
+        </p>
+        <div className="post-card__footer">
+          <span>From {getSourceName(item)}</span>
+          {item.link && (
+            <a href={item.link} target="_blank" rel="noreferrer" className="post-card__source dk-link">
+              Read the full release
+              <span className="dk-visually-hidden"> of {item.title}</span>
+              <External />
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
   </li>
 );
 
@@ -64,7 +74,7 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
   };
 
   return (
-    <div className="py-5 flex items-center justify-center gap-3 border-t border-[#b1b4b6]">
+    <div className="mt-6 max-w-[720px] py-5 flex items-center justify-center gap-3 border-t border-[#b1b4b6]">
       <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="dk-btn">
         Previous
       </button>
@@ -138,13 +148,11 @@ export function Feed({ initial }) {
         {data.length === 0 ? (
           <div className="dk-empty">No news articles found</div>
         ) : (
-          <div className="dwp-timeline">
-            <ol className="dwp-timeline__items">
-              {data.map((item) => (
-                <FeedItem key={item.id} item={item} />
-              ))}
-            </ol>
-          </div>
+          <ol className="post-timeline">
+            {data.map((item) => (
+              <FeedItem key={item.id} item={item} />
+            ))}
+          </ol>
         )}
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
