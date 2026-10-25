@@ -273,7 +273,7 @@ main {
 .govuk-breadcrumbs__list-item + .govuk-breadcrumbs__list-item::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 10px 0 8px; border: solid var(--dk-muted); border-width: 1px 1px 0 0; transform: rotate(45deg); }
 .govuk-breadcrumbs__link { color: var(--dk-ink); text-decoration: underline; text-underline-offset: 0.15em; }
 .title-block { margin-bottom: 40px; }
-/* The lede is the kit's lead paragraph (.dk-lede): 24px, 21px on phones, in the text colour, in the heading's column. */
+/* The lede is the kit's lead paragraph (.dk-lede): 24px, 21px on phones, in the text colour, in the 720px text column. */
 .lede { margin: 0; font-size: 24px; line-height: 30px; color: var(--dk-ink, #0b0c0c); max-width: var(--dk-text-column, 720px); text-wrap: pretty; }
 @media (max-width: 640px) { .lede { font-size: 21px; line-height: 25px; } }
 .insight-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
