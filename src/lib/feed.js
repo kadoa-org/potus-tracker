@@ -3,7 +3,7 @@
 const ET = "America/New_York";
 export const dateOnly = (iso) => String(iso).slice(0, 10);
 
-// GOV.UK date and time: "26 September 2026 at 11:58am", in Washington time.
+// Date and time written out: "26 September 2026 at 11:58am", in Washington time.
 export function govDateTime(iso) {
   const d = new Date(iso);
   const date = new Intl.DateTimeFormat("en-GB", { timeZone: ET, day: "numeric", month: "long", year: "numeric" }).format(d);

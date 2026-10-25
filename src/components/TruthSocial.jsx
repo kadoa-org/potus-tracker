@@ -39,7 +39,7 @@ const timeOf = (iso) => govDateTime(iso).split(" at ")[1];
 const MEDIA_TAG = { video: "Video", image: "Image" };
 const mediaNoun = (kinds) => (kinds.length > 1 ? "media" : kinds[0]);
 
-// One post as a DWP timeline item holding a GOV.UK summary card. The tick carries when it was posted and its impact; the
+// One post as a DWP timeline item holding a summary card. The tick carries when it was posted and its impact; the
 // card's grey title bar carries our AI note on why it matters (the summary card's title names what the card is about),
 // and the content is the post: his words as body text, then for an image or a video what it shows, as the pipeline's
 // model described it, and a footer line with topic, mentions and the link to the original.
@@ -57,7 +57,7 @@ const TruthSocialPost = ({ post, parsed, label, pinned = false }) => {
         {pinned && <strong>Linked post · </strong>}
         {when}
         <ImpactMeter signal={post.signal} full />
-        {/* What the post carries, in GOV.UK's blue tag so it never reads as a level of impact. */}
+        {/* What the post carries, in a blue tag so it never reads as a level of impact. */}
         {kinds.map((m) => (
           <strong key={m} className="gov-tag gov-tag--blue">
             {MEDIA_TAG[m]}
@@ -149,7 +149,7 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
 // Filters live in one row above the feed and drive server-side queries, so a
 // selection narrows the whole dataset with correct pagination (not just the
 // visible page).
-// Two GOV.UK selects side by side, as the UKHSA dashboard filters its charts. They replace a segmented button row and
+// Two selects side by side to filter the feed. They replace a segmented button row and
 // a small select that used two different control styles for the same job.
 const FilterBar = ({ signal, setSignal, category, setCategory }) => (
   <div className="dk-filter-bar">
@@ -245,7 +245,7 @@ export function TruthSocial({ initial, postId }) {
     <main>
       <div className="mb-10">
         <h1 className="dk-h1">Trump&apos;s Truth Social Posts</h1>
-        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">Every post, with an AI summary of why it matters and its likely impact.</p>
+        <p className="lede">Every post, with an AI summary of why it matters and its likely impact.</p>
       </div>
       {pinned && (
         <div className="mb-10 max-w-[760px]">

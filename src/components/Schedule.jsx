@@ -191,7 +191,7 @@ export function Schedule({ initial }) {
     <main>
       <div className="mb-10">
         <h1 className="dk-h1">President Trump&apos;s Schedule Today</h1>
-        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">His public schedule and latest known location, updated live.</p>
+        <p className="lede">His public schedule and latest known location, updated live.</p>
       </div>
 
       {locationLoading && !location && (

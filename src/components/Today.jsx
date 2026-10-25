@@ -42,7 +42,7 @@ const dateLabel = (t) => {
 // a UTC "today" moved the page to tomorrow's schedule at 8 PM ET.
 const etDate = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(d);
 const todayKey = () => etDate(new Date());
-// Headline cells hold at most two short lines under the value, as UKHSA's do. Schedule entries all open with "The President",
+// Headline cells hold at most two short lines under the value. Schedule entries all open with "The President",
 // which says nothing on a page about the President, so it is dropped: "Attends the University of Tennessee ...".
 const shortEvent = (title) => {
   const t = cleanEventTitle(title).replace(/^the president\s+/i, "");
@@ -53,7 +53,7 @@ const singular = (c) => {
   const raw = c || "News";
   // Only a one-kind category is made singular; "Nominations & Appointments" stays as it is.
   const one = raw.includes("&") ? raw : raw.replace(/ies$/, "y").replace(/s$/, "");
-  // Sentence case, as GOV.UK writes labels: "Executive order".
+  // Labels in sentence case: "Executive order".
   return one.charAt(0).toUpperCase() + one.slice(1).toLowerCase();
 };
 
@@ -108,7 +108,7 @@ export function Today({ initial }) {
   }, [todaysEvents]);
 
   const traveling = location?.status === "traveling";
-  // Headlines are facts that fit a headline cell, as on the UKHSA dashboard: where he is, what is next, and two counts
+  // Headlines are facts that fit a headline cell: where he is, what is next, and two counts
   // that link to their feeds. The latest post and the latest order were tried as cells, but their only text is a full
   // sentence or a 15-word title, which either overflowed the cell or was cut to nothing; both are the first items of
   // the sections below.
@@ -161,7 +161,7 @@ export function Today({ initial }) {
         <h1 className="dk-h1">POTUS Tracker</h1>
         {/* The live answer to "where is Trump today" sits right under the title, where the old sentence-style h1
             put it, so the page still answers the query in its opening text. */}
-        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">
+        <p className="lede">
           {context ?? "Where President Trump is, his public schedule and what he posts, updated live."}
         </p>
       </div>
@@ -266,10 +266,9 @@ export function Today({ initial }) {
           description="Official actions and releases, each summarized by AI."
           right={<More href="/whitehouse">All news</More>}
         />
-        {/* GOV.UK's document list (the "gem-c-document-list" used on GOV.UK topic and organisation pages): a linked title,
-            a short description and a metadata line of type and date, one release under the next. It replaces three
-            grey cards, whose titles ran from one line to five and left the cards ragged or, aligned, full of gaps;
-            GOV.UK lists documents of uneven length this way rather than in a grid. */}
+        {/* A document list: a linked title, a short description and a metadata line of type and date, one release
+            under the next. It replaces three grey cards, whose titles ran from one line to five and left the cards
+            ragged or, aligned, full of gaps; documents of uneven length read better as a list than in a grid. */}
         <ul className="doc-list">
           {news.map((n) => (
             <li key={n.id} className="doc-list__item">

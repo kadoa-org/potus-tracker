@@ -16,7 +16,8 @@ body {
   @apply antialiased scroll-smooth;
 }
 
-/* GOV.UK headings for any heading without its own class. In the base layer, so a utility class still wins. */
+/* Headings without their own class: 36px, 24px and 19px with tight line heights. In the base layer, so a utility
+   class still wins. */
 @layer base {
   h1 { font-size: 36px; line-height: 1.12; margin-bottom: 20px; }
   h2 { font-size: 24px; line-height: 1.25; margin-bottom: 20px; }
@@ -24,7 +25,7 @@ body {
   @media (max-width: 640px) { h1 { font-size: 27px; } }
 }
 
-/* Page body: GOV.UK spacing, 40px above the title and 60px before the footer (25px and 40px on phones). */
+/* Page body: 40px above the title and 60px before the footer (25px and 40px on phones). */
 /* Doubled class: the kit's .dk-container sets padding with a shorthand, and the bundle can load it after this file. */
 .dk-container.page-main { padding-top: 40px; padding-bottom: 60px; }
 @media (max-width: 640px) { .dk-container.page-main { padding-top: 25px; padding-bottom: 40px; } }
@@ -88,7 +89,7 @@ main {
   outline-offset: 0;
 }
 
-/* Primary CTA: GOV.UK-style green fill in the kit palette. Local to potus;
+/* Primary CTA: a solid green fill in the kit palette. Local to potus;
    backport to the kit if a second consumer needs it. */
 .dk-btn.dk-btn--primary {
   background: var(--dk-green);
@@ -183,16 +184,16 @@ main {
 .potus-list { border-top: 1px solid var(--dk-gov-border); }
 .potus-list > li { padding: 12px 0; border-bottom: 1px solid var(--dk-rule-soft); }
 
-/* GOV.UK Frontend v5 tag (sentence case, regular weight), used for impact in Impact.jsx. */
+/* Tag: a pale fill with dark text, sentence case and regular weight, used for impact in Impact.jsx. */
 .gov-tag { display: inline-block; padding: 2px 8px 3px; font-size: 16px; line-height: 1.25; font-weight: 400; white-space: nowrap; }
 .gov-tag--red { background: #f4cdc6; color: #2a0b06; }
 .gov-tag--orange { background: #fcd6c3; color: #6e3619; }
 .gov-tag--grey { background: #e5e6e7; color: #0b0c0c; }
 .gov-tag--blue { background: #bbd4ea; color: #0c2d4a; }
 
-/* Feeds (Truth Social, White House): the DWP Design System timeline, copied 1:1 from design-system.dwp.gov.uk
-   (dwp-frontend): a 3px brand-blue rule, an 11px tick at each item and a cap under the last one; date and time,
-   heading, by-line, content and link in that order. Only the font is the site's own. */
+/* Feeds (Truth Social, White House): the DWP Design System timeline, copied 1:1 from dwp-frontend: a 3px
+   brand-blue rule, an 11px tick at each item and a cap under the last one; date and time, heading, by-line, content
+   and link in that order. Only the font is the site's own. */
 .dwp-timeline__items { margin: 0; padding: 0; list-style-type: none; border-left: 3px solid #1d70b8; }
 .dwp-timeline__item { position: relative; top: -8px; margin: 15px 0; padding: 0 0 15px 18px; }
 .dwp-timeline__item::before { content: ""; position: absolute; top: 8px; left: -1px; width: 11px; border-top: 3px solid #1d70b8; }
@@ -206,8 +207,8 @@ main {
 .text-button { appearance: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Truth Social posts (TruthSocial.jsx): the DWP timeline (a 3px brand-blue rule with an 11px tick per item), each item
-   a GOV.UK summary card (1px border, a light grey title bar with a bold title, white content). Sizes are GOV.UK's
-   body-s, one step under the 19px body, which reads too large for a feed: 16px bold titles and 16px text, with the
+   a summary card (1px border, a light grey title bar with a bold title, white content). Sizes are the small body
+   size, one step under the 19px body, which reads too large for a feed: 16px bold titles and 16px text, with the
    date, metadata and captions in secondary grey. The column is capped near 80 characters a line. No shadow: a card is not a link, and a shadow would make it look like one. */
 .post-timeline { list-style: none; margin: 0; padding: 0; max-width: 720px; border-left: 3px solid #1d70b8; }
 .post-timeline__item { position: relative; padding: 0 0 24px 18px; }
@@ -235,8 +236,8 @@ main {
   .post-card__source { margin-left: 0; }
 }
 
-/* GOV.UK secondary button, for expanding a long post: a button, so it reads as an action on the page rather than a
-   link that leaves it. */
+/* Secondary button, grey with a darker bottom edge, for expanding a long post: a button, so it reads as an action on
+   the page rather than a link that leaves it. */
 .gov-button-secondary { display: inline-block; margin: 10px 0 0; padding: 6px 10px 5px; border: 2px solid transparent; border-radius: 0; background: #f3f2f1; box-shadow: 0 2px 0 #929191; color: #0b0c0c; font: inherit; font-size: 16px; line-height: 1.1875; cursor: pointer; }
 .gov-button-secondary:hover { background: #dbdad9; }
 .gov-button-secondary:focus-visible { outline: 3px solid transparent; border-color: #fd0; background: #fd0; box-shadow: inset 0 0 0 1px #fd0, 0 2px 0 #0b0c0c; }
@@ -245,7 +246,7 @@ main {
 /* A timeline pulls its first item up 8px (DWP geometry), so it needs room under a section heading. */
 .dk-heading + .dwp-timeline { margin-top: 25px; }
 
-/* GOV.UK document list (Today.jsx, latest White House releases): title link, description, then type and date, with a
+/* Document list (Today.jsx, latest White House releases): title link, description, then type and date, with a
    rule between items. */
 .doc-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--dk-gov-border); }
 .doc-list__item { padding: 15px 0; border-bottom: 1px solid var(--dk-rule-soft); }
@@ -255,7 +256,7 @@ main {
 .doc-list__meta { margin: 0; font-size: 16px; color: var(--dk-gov-secondary); }
 
 /* Compact timeline for the dashboard's half-width columns. The DWP sizes (19px bold headings) are set for a
-   full-width page; in a column, every AI summary turned into three lines of heavy bold. One step down the GOV.UK
+   full-width page; in a column, every AI summary turned into three lines of heavy bold. One step down the type
    scale: 16px bold headings, 16px grey date and by-line, and less space between items. */
 .dwp-timeline--compact .dwp-timeline__item { margin: 10px 0; padding-bottom: 10px; }
 .dwp-timeline--compact .dwp-timeline__datetime { font-size: 16px; color: var(--dk-gov-secondary); margin-bottom: 3px; }
@@ -264,15 +265,17 @@ main {
 .dwp-timeline--compact .dwp-timeline__link { font-size: 16px; }
 
 
-/* Insights, as on the Congress Trading Monitor and Energy Price Monitor: GOV.UK breadcrumbs, a title block, and
-   UKHSA-style topic cards on the index (grey, with a 4px blue top rule). */
+/* Insights, as on the Congress Trading Monitor and Energy Price Monitor: breadcrumbs, a title block, and
+   topic cards on the index (grey, with a 4px blue top rule). */
 .govuk-breadcrumbs { margin: 0 0 12px; font-size: 16px; }
 .govuk-breadcrumbs__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; }
 .govuk-breadcrumbs__list-item { display: inline-flex; align-items: center; }
 .govuk-breadcrumbs__list-item + .govuk-breadcrumbs__list-item::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 10px 0 8px; border: solid var(--dk-muted); border-width: 1px 1px 0 0; transform: rotate(45deg); }
 .govuk-breadcrumbs__link { color: var(--dk-ink); text-decoration: underline; text-underline-offset: 0.15em; }
 .title-block { margin-bottom: 40px; }
-.lede { margin: 0; font-size: 19px; line-height: 1.45; color: var(--dk-muted); max-width: 640px; }
+/* The lede is the kit's lead paragraph (.dk-lede): 24px, 21px on phones, in the text colour, in the heading's column. */
+.lede { margin: 0; font-size: 24px; line-height: 30px; color: var(--dk-ink, #0b0c0c); max-width: var(--dk-text-column, 720px); text-wrap: pretty; }
+@media (max-width: 640px) { .lede { font-size: 21px; line-height: 25px; } }
 .insight-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
 .insight-card { background: #f3f2f1; padding: 20px 20px 4px; border-top: 4px solid #1d70b8; }
 .insight-card__title { font-size: 24px; line-height: 1.25; font-weight: 700; margin: 0 0 12px; }

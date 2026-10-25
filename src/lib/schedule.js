@@ -60,7 +60,7 @@ export function isUpcoming(event, now = new Date()) {
   return eventTimeLabel(event.time) ? wall >= current : wall.slice(0, 10) >= current.slice(0, 10);
 }
 
-// GOV.UK time, "8:00am", or null for a date-only event.
+// Time in lowercase without a space, "8:00am", or null for a date-only event.
 export const govTime = (iso) => eventTimeLabel(iso)?.replace(" ", "").toLowerCase() ?? null;
 
 // A day's events in the order they happen, with the ones whose time was not announced at the end.

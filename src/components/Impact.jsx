@@ -22,10 +22,9 @@ export const CATEGORY_LABEL = {
   other: "Other",
 };
 
-// Impact as a GOV.UK tag: "High impact", "Medium impact", "Low impact". GOV.UK advises against icons on public
-// pages (one icon reads as different things to different people) and uses tags for a status like this, as the UKHSA
-// dashboard does for its trends. The tag names what is measured, so it reads on its own: a single word such as
-// "Minor" did not say minor what. Colour is a second cue, never the only one; low stays grey because it means noise.
+// Impact as a tag: "High impact", "Medium impact", "Low impact". No icons on public pages (one icon reads as
+// different things to different people); a status like this, such as a trend, is a tag. The tag names what is
+// measured, so it reads on its own: a single word such as "Minor" did not say minor what. Colour is a second cue, never the only one; low stays grey because it means noise.
 const TONE = { high: "red", medium: "orange", low: "grey" };
 // `full` names the measure ("Medium impact") for a tag that stands alone, without a key next to it.
 export function ImpactMeter({ signal, full = false }) {

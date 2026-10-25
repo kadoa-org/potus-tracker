@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-// GOV.UK breadcrumbs, as on the sibling sites' insight pages: links up the hierarchy, the current page last.
+// Breadcrumbs, as on the sibling sites' insight pages: links up the hierarchy, the current page last.
 export function Breadcrumbs({ items }) {
   return (
     <nav className="govuk-breadcrumbs" aria-label="Breadcrumb">

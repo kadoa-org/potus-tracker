@@ -22,7 +22,7 @@ const singular = (c) => {
   const raw = c || "News";
   // Only a one-kind category is made singular; "Nominations & Appointments" stays as it is.
   const one = raw.includes("&") ? raw : raw.replace(/ies$/, "y").replace(/s$/, "");
-  // Sentence case, as GOV.UK writes labels: "Executive order".
+  // Labels in sentence case: "Executive order".
   return one.charAt(0).toUpperCase() + one.slice(1).toLowerCase();
 };
 
@@ -142,7 +142,7 @@ export function Feed({ initial }) {
     <main>
       <div className="mb-10">
         <h1 className="dk-h1">White House News Today</h1>
-        <p className="text-[19px] leading-[1.45] text-[#505a5f] m-0 max-w-[640px]">Official releases, newest first. Each summary is written by AI and links to the full release.</p>
+        <p className="lede">Official releases, newest first. Each summary is written by AI and links to the full release.</p>
       </div>
       <div id="feedContent">
         {data.length === 0 ? (
