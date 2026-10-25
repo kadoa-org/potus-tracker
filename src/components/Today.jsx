@@ -211,7 +211,7 @@ export function Today({ initial }) {
           {topSignal.length === 0 ? (
             <div className="dk-empty">No high or medium impact posts yet.</div>
           ) : (
-            // The same DWP timeline as the Truth Social page. No impact tag: this panel only lists high and medium
+            // The same timeline as the Truth Social page. No impact tag: this panel only lists high and medium
             // impact posts, as its description says, so a tag on every row would repeat it.
             <div className="dwp-timeline dwp-timeline--compact">
               <ol className="dwp-timeline__items">

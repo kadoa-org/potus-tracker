@@ -1,6 +1,6 @@
 import { cleanEventTitle, govTime } from "../lib/schedule";
 
-// A day's public schedule as a DWP timeline: the time, the event, and where it is, in the component's order of
+// A day's public schedule as a timeline: the time, the event, and where it is, in the component's order of
 // date and time, heading and by-line. Shared by the dashboard and the schedule page so both read the same.
 // `headingLevel` follows the page outline: h3 under a section heading. `compact` is the dashboard column size.
 export function ScheduleTimeline({ events, headingLevel: H = "h3", compact = false }) {

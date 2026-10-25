@@ -39,7 +39,7 @@ const timeOf = (iso) => govDateTime(iso).split(" at ")[1];
 const MEDIA_TAG = { video: "Video", image: "Image" };
 const mediaNoun = (kinds) => (kinds.length > 1 ? "media" : kinds[0]);
 
-// One post as a DWP timeline item holding a summary card. The tick carries when it was posted and its impact; the
+// One post as a timeline item holding a summary card. The tick carries when it was posted and its impact; the
 // card's grey title bar carries our AI note on why it matters (the summary card's title names what the card is about),
 // and the content is the post: his words as body text, then for an image or a video what it shows, as the pipeline's
 // model described it, and a footer line with topic, mentions and the link to the original.

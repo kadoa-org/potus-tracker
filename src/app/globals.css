@@ -191,7 +191,7 @@ main {
 .gov-tag--grey { background: #e5e6e7; color: #0b0c0c; }
 .gov-tag--blue { background: #bbd4ea; color: #0c2d4a; }
 
-/* Feeds (Truth Social, White House): the DWP Design System timeline, copied 1:1 from dwp-frontend: a 3px
+/* Feeds (Truth Social, White House): a timeline: a 3px
    brand-blue rule, an 11px tick at each item and a cap under the last one; date and time, heading, by-line, content
    and link in that order. Only the font is the site's own. */
 .dwp-timeline__items { margin: 0; padding: 0; list-style-type: none; border-left: 3px solid #1d70b8; }
@@ -206,7 +206,7 @@ main {
 .dwp-timeline__link { font-weight: 400; font-size: 1.1875rem; line-height: 1.3157894737; color: var(--dk-link); text-decoration: underline; text-underline-offset: 0.1578em; }
 .text-button { appearance: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
-/* Truth Social posts (TruthSocial.jsx): the DWP timeline (a 3px brand-blue rule with an 11px tick per item), each item
+/* Truth Social posts (TruthSocial.jsx): the timeline (a 3px brand-blue rule with an 11px tick per item), each item
    a summary card (1px border, a light grey title bar with a bold title, white content). Sizes are the small body
    size, one step under the 19px body, which reads too large for a feed: 16px bold titles and 16px text, with the
    date, metadata and captions in secondary grey. The column is capped near 80 characters a line. No shadow: a card is not a link, and a shadow would make it look like one. */
@@ -243,7 +243,7 @@ main {
 .gov-button-secondary:focus-visible { outline: 3px solid transparent; border-color: #fd0; background: #fd0; box-shadow: inset 0 0 0 1px #fd0, 0 2px 0 #0b0c0c; }
 .gov-button-secondary:active { top: 2px; box-shadow: none; }
 
-/* A timeline pulls its first item up 8px (DWP geometry), so it needs room under a section heading. */
+/* A timeline pulls its first item up 8px (timeline geometry), so it needs room under a section heading. */
 .dk-heading + .dwp-timeline { margin-top: 25px; }
 
 /* Document list (Today.jsx, latest White House releases): title link, description, then type and date, with a
@@ -255,7 +255,7 @@ main {
 .doc-list__desc { margin: 0 0 5px; font-size: 16px; line-height: 1.5; max-width: 75ch; }
 .doc-list__meta { margin: 0; font-size: 16px; color: var(--dk-gov-secondary); }
 
-/* Compact timeline for the dashboard's half-width columns. The DWP sizes (19px bold headings) are set for a
+/* Compact timeline for the dashboard's half-width columns. The full timeline sizes (19px bold headings) are set for a
    full-width page; in a column, every AI summary turned into three lines of heavy bold. One step down the type
    scale: 16px bold headings, 16px grey date and by-line, and less space between items. */
 .dwp-timeline--compact .dwp-timeline__item { margin: 10px 0; padding-bottom: 10px; }

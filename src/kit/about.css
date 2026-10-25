@@ -10,7 +10,7 @@
 .dk-about__text { font-size: 16px; line-height: 1.5; margin: 0 0 12px; }
 .dk-about__links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0 0; font-size: 16px; }
 
-/* Steps: a blue rule with a tick per item and a closing tick (DWP timeline geometry). */
+/* Steps: a blue rule with a tick per item and a closing tick (timeline geometry). */
 .dk-timeline { margin-top: 24px; }
 .dk-timeline__items { margin: 0; padding: 0; list-style: none; border-left: 3px solid var(--dk-link); }
 .dk-timeline__item { position: relative; top: -8px; margin: 15px 0; padding: 0 0 12px 18px; }
