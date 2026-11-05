@@ -33,15 +33,13 @@ const monthLabel = (m: string) => `${MONTH[+m.slice(5) - 1]} ${m.slice(0, 4)}`;
 
 export default function TrumpTradesPage() {
   const { totals, months, mix } = data;
-  const ahead = totals.trump - totals.congress;
   return (
     <main>
       <div className="title-block">
         <h1 className="dk-h1">{insight.title}</h1>
         <p className="lede">
-          Trump&apos;s {totals.accounts} investment accounts made {fmt(totals.trump)} disclosed trades from January 2025 to August 2026,{" "}
-          {fmt(ahead)} more than the {totals.members} members of Congress who traded, with their families. Most were stocks in big
-          companies, spread across hundreds of names.
+          Since January 2025, Trump&apos;s {totals.accounts} accounts made {fmt(totals.trump)} trades. All of Congress, families included, made{" "}
+          {fmt(totals.congress)}.
         </p>
       </div>
 
@@ -81,12 +79,6 @@ export default function TrumpTradesPage() {
             ),
           },
         ]}
-        footer={
-          <p>
-            Source: <a className="dk-link" href={OGE}>Trump&apos;s OGE financial disclosures</a>; <a className="dk-link" href={HOUSE}>House</a> and <a className="dk-link" href={SENATE}>Senate</a> periodic
-            transaction reports.
-          </p>
-        }
       />
 
       </div>
@@ -94,10 +86,10 @@ export default function TrumpTradesPage() {
         <ChartCard
           id="stocks-title"
           title="Stocks traded by Trump's accounts"
-          description={`${fmt(mix.stockTickers)} stocks, none traded more than ${mix.top[0].buy + mix.top[0].sell} times. The chart shows the 10 most traded; the table lists them all. Outside managers run the accounts, the White House says.`}
+          description={`${fmt(mix.stockTickers)} stocks, none traded more than ${mix.top[0].buy + mix.top[0].sell} times. Outside managers run the accounts, the White House says.`}
           date={`${monthLabel(mix.from)} to ${monthLabel(mix.to)}`}
           tabs={[
-            { label: "Chart", content: <TopStocks top={mix.top} /> },
+            { label: "Chart", content: <TopStocks stocks={mix.all} /> },
             {
               label: "Tabular data",
               short: "Tabular",
@@ -127,11 +119,6 @@ export default function TrumpTradesPage() {
               ),
             },
           ]}
-          footer={
-            <p>
-              Source: <a className="dk-link" href={OGE}>Trump&apos;s OGE periodic transaction reports</a>.
-            </p>
-          }
         />
       </div>
 
@@ -139,12 +126,12 @@ export default function TrumpTradesPage() {
         <SectionHeading title="About the data" />
         <ul>
           <li>
-            Trades come from Trump&apos;s filings with the Office of Government Ethics: the 2026 annual report, which lists 2025 trades not
+            Trades come from Trump&apos;s filings with the <a className="dk-link" href={OGE}>Office of Government Ethics</a>: the 2026 annual report, which lists 2025 trades not
             reported earlier, and every periodic transaction report through August 2026. We count each reported trade. Filings give value
             ranges, not exact amounts.
           </li>
           <li>
-            Congress trades come from House and Senate periodic transaction reports, with amended filings counted once.
+            Congress trades come from <a className="dk-link" href={HOUSE}>House</a> and <a className="dk-link" href={SENATE}>Senate</a> periodic transaction reports, with amended filings counted once.
           </li>
           <li>
             Reported values: ${(totals.trumpLo / 1e9).toFixed(1)}B to ${(totals.trumpHi / 1e9).toFixed(1)}B for Trump&apos;s accounts, $
