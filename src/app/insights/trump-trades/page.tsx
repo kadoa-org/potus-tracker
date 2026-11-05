@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import { CsvDownload } from "@/components/CsvDownload";
-import { ChanceRows, MonthlyTrades, PostTimeline } from "@/components/TradeCharts";
+import { MonthlyTrades, TopStocks } from "@/components/TradeCharts";
 import { ChartCard, DataTable, SectionHeading } from "@/kit";
 import { insightBySlug } from "@/lib/insights";
 import data from "@/data/trump-trades.json";
 
-// A static analysis, rebuilt by hand from the disclosures: Trump's trades against Congress, and his accounts' trades in
-// the week before his posts about a company against the same posts moved to random dates.
+// A static analysis, rebuilt by hand from the disclosures: Trump's trades against Congress, and the stocks his accounts
+// traded most. The data is built in the datasets repo (services/custom/datasets/trump-trades).
 const insight = insightBySlug("trump-trades")!;
 const URL = "https://www.kadoa.com/potus/insights/trump-trades";
 const OGE = "https://www.oge.gov/Web/OGE.nsf/Officials%20Individual%20Disclosures%20Search%20Collection?OpenForm";
 const HOUSE = "https://disclosures-clerk.house.gov/FinancialDisclosure";
 const SENATE = "https://efdsearch.senate.gov/search/";
-const TRUTH = "https://www.trumpstruth.org/";
 
 // Made by scripts/og-insights.mjs (npm run og) and committed, since Vercel builds have no Chrome.
 const OG_IMAGE = { url: "https://www.kadoa.com/potus/og/trump-trades.png", width: 1200, height: 630 };
@@ -26,18 +25,14 @@ export const metadata: Metadata = {
 };
 
 type Month = { month: string; trump: number; congress: number };
-type Event = { date: string; company: string; ticker: string; stance: string; buyDays: number[]; saleDays: number[]; match: boolean; text: string; url: string | null };
+type Stock = { ticker: string; company: string; buy: number; sell: number };
 
 const fmt = (n: number) => n.toLocaleString("en-US");
-const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const monthLabel = (m: string) => `${MONTH[+m.slice(5) - 1]} ${m.slice(0, 4)}`;
-const tradesBefore = (e: Event) =>
-  [...e.buyDays.map((d) => `bought ${-d}d`), ...e.saleDays.map((d) => `sold ${-d}d`)].join(", ") || "none";
 
 export default function TrumpTradesPage() {
-  const { totals, months, chance, examples } = data;
-  const events = data.events as Event[];
+  const { totals, months, mix } = data;
   const ahead = totals.trump - totals.congress;
   return (
     <main>
@@ -45,8 +40,8 @@ export default function TrumpTradesPage() {
         <h1 className="dk-h1">{insight.title}</h1>
         <p className="lede">
           Trump&apos;s {totals.accounts} investment accounts made {fmt(totals.trump)} disclosed trades from January 2025 to August 2026,{" "}
-          {fmt(ahead)} more than the {totals.members} members of Congress who traded, with their families. But in the week before he praised or
-          attacked a company, the accounts traded its stock about as often as they would have on random dates.
+          {fmt(ahead)} more than the {totals.members} members of Congress who traded, with their families. Most were stocks in big
+          companies, spread across hundreds of names.
         </p>
       </div>
 
@@ -96,64 +91,48 @@ export default function TrumpTradesPage() {
 
       </div>
       <div className="nights-card">
-      <ChartCard
-        id="chance-title"
-        title="Their trades before his posts match random dates"
-        description="Posts praising or attacking a company the accounts trade, and whether the accounts bought or sold its stock in the 7 days before."
-        date="January 2025 to August 2026"
-        tabs={[
-          { label: "Chart", content: <ChanceRows chance={chance} /> },
-          {
-            label: "Tabular data",
-            short: "Tabular",
-            scroll: true,
-            content: (
-              <DataTable
-                rows={events}
-                rowKey={(e: Event) => `${e.ticker}-${e.date}-${e.stance}`}
-                columns={[
-                  { key: "date", header: "Date", render: (e: Event) => day(e.date) },
-                  { key: "company", header: "Company", render: (e: Event) => e.company },
-                  { key: "stance", header: "Post", hideBelow: "sm", render: (e: Event) => (e.stance === "praise" ? "Praise" : "Attack") },
-                  { key: "trades", header: "Trades in the week before", render: (e: Event) => tradesBefore(e) },
-                  { key: "text", header: "Text", hideBelow: "md", clamp: true, render: (e: Event) => (e.url ? <a href={e.url}>{e.text}</a> : e.text) },
-                ]}
-              />
-            ),
-          },
-          {
-            label: "Download",
-            content: (
-              <CsvDownload
-                intro="Every post praising or attacking a company the accounts trade, with the days before the post on which they bought or sold its stock."
-                file="trump-posts-and-trades.csv"
-                header={["post_date", "company", "ticker", "stance", "bought_days_before", "sold_days_before", "post_url", "text"]}
-                rows={events.map((e) => [e.date, e.company, e.ticker, e.stance, e.buyDays.map((d) => -d).join(" "), e.saleDays.map((d) => -d).join(" "), e.url ?? "", e.text])}
-              />
-            ),
-          },
-        ]}
-        footer={
-          <p>
-            Source: <a className="dk-link" href={TRUTH}>trumpstruth.org</a> archive of Truth Social posts; <a className="dk-link" href={OGE}>Trump&apos;s OGE financial disclosures</a>.
-          </p>
-        }
-      />
-
-      </div>
-      <div className="nights-card">
         <ChartCard
-          id="examples-title"
-          title="Some posts came days after a trade in the same stock"
-          description="A few that look timed. Across all posts, they are no more common than chance."
+          id="stocks-title"
+          title="Stocks traded by Trump's accounts"
+          description={`${fmt(mix.stockTickers)} stocks, none traded more than ${mix.top[0].buy + mix.top[0].sell} times. The chart shows the 10 most traded; the table lists them all. Outside managers run the accounts, the White House says.`}
+          date={`${monthLabel(mix.from)} to ${monthLabel(mix.to)}`}
+          tabs={[
+            { label: "Chart", content: <TopStocks top={mix.top} /> },
+            {
+              label: "Tabular data",
+              short: "Tabular",
+              scroll: true,
+              content: (
+                <DataTable
+                  rows={mix.all}
+                  rowKey={(r: Stock) => r.ticker}
+                  columns={[
+                    { key: "company", header: "Company", render: (r: Stock) => r.company },
+                    { key: "ticker", header: "Ticker", render: (r: Stock) => r.ticker },
+                    { key: "buy", header: "Purchases", align: "right", render: (r: Stock) => fmt(r.buy) },
+                    { key: "sell", header: "Sales", align: "right", render: (r: Stock) => fmt(r.sell) },
+                  ]}
+                />
+              ),
+            },
+            {
+              label: "Download",
+              content: (
+                <CsvDownload
+                  intro="Every stock the accounts traded as a CSV, with purchases and sales."
+                  file="trump-stocks-traded.csv"
+                  header={["company", "ticker", "purchases", "sales"]}
+                  rows={mix.all.map((r: Stock) => [r.company, r.ticker, r.buy, r.sell])}
+                />
+              ),
+            },
+          ]}
           footer={
             <p>
-              Source: <a className="dk-link" href={TRUTH}>trumpstruth.org</a> archive of Truth Social posts; <a className="dk-link" href={OGE}>Trump&apos;s OGE financial disclosures</a>.
+              Source: <a className="dk-link" href={OGE}>Trump&apos;s OGE periodic transaction reports</a>.
             </p>
           }
-        >
-          <PostTimeline examples={examples} />
-        </ChartCard>
+        />
       </div>
 
       <section className="insight-notes">
@@ -176,16 +155,8 @@ export default function TrumpTradesPage() {
             spread across hundreds of stocks on the same day.
           </li>
           <li>
-            Posts are every Truth Social post in the period, from the trumpstruth.org archive. Gemini tagged each one for the listed companies
-            it names and whether it praises or attacks them.
-          </li>
-          <li>
-            A purchase counts for a post praising a company, and a sale for a post attacking one, when it falls 1 to 7 days before the post, in
-            Eastern time.
-          </li>
-          <li>
-            Random dates: each post moved to a random day between January 2025 and August 2026, 1,000 times; the range covers the middle 90% of
-            runs. Media companies, such as Comcast and Disney, are excluded.
+            The stocks cover January to May 2026, the latest months whose periodic reports are complete. Trades without a ticker, such as
+            bonds, are left out. Company names are cleaned from the filings.
           </li>
         </ul>
       </section>

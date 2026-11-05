@@ -3,10 +3,10 @@
 export const INSIGHTS = [
   {
     slug: "trump-trades",
-    title: "Trump's accounts out-traded Congress, but not ahead of his posts",
-    summary: "His accounts made more stock trades than all of Congress since January 2025. Their trades before his posts about a company match random dates.",
-    seoTitle: "Trump's Stock Trades vs His Truth Social Posts",
-    seoDescription: "Trump's investment accounts made 31,877 disclosed trades from January 2025 to August 2026, more than all of Congress. Trades in the week before his posts about a company match random dates.",
+    title: "Trump's accounts made more trades than all of Congress combined",
+    summary: "31,877 disclosed trades since January 2025, against 20,973 by all of Congress, spread across hundreds of stocks.",
+    seoTitle: "Trump's Stock Trades vs Congress",
+    seoDescription: "Trump's investment accounts made 31,877 disclosed trades from January 2025 to August 2026, more than all 175 trading members of Congress combined. Most were stocks in big companies.",
   },
   {
     slug: "travel-map",

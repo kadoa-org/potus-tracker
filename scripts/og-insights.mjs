@@ -18,7 +18,7 @@ const images = [];
 const t = trades.totals;
 images.push({
   out: out('trump-trades'), title: title('trump-trades'), source: 'OGE, House and Senate disclosures, Truth Social',
-  key: "Disclosed trades, January 2025 to August 2026. His accounts' trades before his posts match random dates.",
+  key: "Disclosed trades, January 2025 to August 2026.",
   figures: [
     { value: fmt(t.trump), label: `Trump's ${t.accounts} accounts`, colour: TRUMP },
     { value: fmt(t.congress), label: `${t.members} members of Congress`, colour: CONGRESS },
