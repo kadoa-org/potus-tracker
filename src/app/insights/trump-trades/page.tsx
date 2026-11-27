@@ -9,6 +9,9 @@ import data from "@/data/trump-trades.json";
 // traded most. The data is built in the datasets repo (services/custom/datasets/trump-trades).
 const insight = insightBySlug("trump-trades")!;
 const URL = "https://www.kadoa.com/potus/insights/trump-trades";
+// The same analysis is on the congress site, which links to it most and earns its backlinks. That copy is the
+// canonical one, so search engines rank one URL instead of splitting the signal between two.
+const CANONICAL = "https://www.kadoa.com/congress/insights/trump-trades";
 const OGE = "https://www.oge.gov/Web/OGE.nsf/Officials%20Individual%20Disclosures%20Search%20Collection?OpenForm";
 const HOUSE = "https://disclosures-clerk.house.gov/FinancialDisclosure";
 const SENATE = "https://efdsearch.senate.gov/search/";
@@ -19,7 +22,7 @@ const OG_IMAGE = { url: "https://www.kadoa.com/potus/og/trump-trades.png", width
 export const metadata: Metadata = {
   title: insight.seoTitle,
   description: insight.seoDescription,
-  alternates: { canonical: URL },
+  alternates: { canonical: CANONICAL },
   openGraph: { url: URL, title: insight.seoTitle, description: insight.seoDescription, images: [OG_IMAGE] },
   twitter: { card: "summary_large_image", title: insight.seoTitle, description: insight.seoDescription, images: [OG_IMAGE.url] },
 };
